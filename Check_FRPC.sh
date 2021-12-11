@@ -70,14 +70,13 @@ main(){
 	fi
 	. ${MODDIR}/files/status.conf
 	if [[ ! -f ${MODDIR}/update ]]; then
-		sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：$RUNNING_STATUS ]，[配置文件状态：$CHECK_FILE_STATUS；累计自动重载配置文件 $RELOAD_NUM 次]，[设备架构：$F_ARCH，检测方式：$RUNNING_METHOD]" "${MODDIR}/module.prop"
+		sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：$RUNNING_STATUS ]，[配置文件状态：$CHECK_FILE_STATUS；自动重载配置文件 $RELOAD_NUM 次]，[设备架构：$F_ARCH，检测方式：$RUNNING_METHOD]" "${MODDIR}/module.prop"
 	else
-		sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：$RUNNING_STATUS ]，[配置文件状态：$CHECK_FILE_STATUS；累计自动重载配置文件 $RELOAD_NUM 次]，[设备架构：$F_ARCH，检测方式：$RUNNING_METHOD]（模块新设定将在设备重启后生效！）" "${MODDIR}/module.prop"
+		sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：$RUNNING_STATUS ]，[配置文件状态：$CHECK_FILE_STATUS；自动重载配置文件 $RELOAD_NUM 次]，[设备架构：$F_ARCH，检测方式：$RUNNING_METHOD]（模块新设定将在设备重启后生效！）" "${MODDIR}/module.prop"
 	fi
 }
 
-[[ -f "${Busybox_file}" ]] && [[ -x "${Busybox_file}" ]]
-if [[ $? -ne 0 ]] && [[ -z "$(which crond)" ]]; then
+if [[ ! -f "${Busybox_file}" ]] && [[ -z "$(which crond)" ]]; then
 	while :
 	do
 		main

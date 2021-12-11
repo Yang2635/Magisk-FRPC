@@ -24,12 +24,12 @@ Set_Crond(){
 	elif [[ ! -x "${MODDIR}/crond/root" ]]; then
 		chmod 0700 ${MODDIR}/crond/root
 	fi
-	[[ -s "${MODDIR}/crond/root" ]] || echo "*/1 * * * * sh $MODDIR/Check_FRPC.sh &>/dev/null" > ${MODDIR}/crond/root
+	[[ -s "${MODDIR}/crond/root" ]] || echo "*/1 * * * * sh ${MODDIR}/Check_FRPC.sh &>/dev/null" > ${MODDIR}/crond/root
 }
 
-[[ ! -d $DATADIR/frpc/logs ]] && mkdir -p $DATADIR/frpc/logs
-[[ ! -f $DATADIR/frpc/frpc.ini ]] && cp -af $MODDIR/files/frpc.ini $DATADIR/frpc/frpc.ini
-chmod -R 0644 $MODDIR/files/status.conf
+[[ ! -d ${DATADIR}/frpc/logs ]] && mkdir -p ${DATADIR}/frpc/logs
+[[ ! -f ${DATADIR}/frpc/frpc.ini ]] && cp -af ${MODDIR}/files/frpc.ini ${DATADIR}/frpc/frpc.ini
+chmod -R 0644 ${MODDIR}/files/status.conf
 
 if [[ -f "${Busybox_file}" ]] && [[ -x "${Busybox_file}" ]]; then
 	Set_Crond
@@ -39,7 +39,7 @@ elif [[ "$(which crond)" ]]; then
 	crond -c ${MODDIR}/crond
 else
 	until [[ $(PROCESS) -ne 0 ]]; do
-		nohup sh $MODDIR/Check_FRPC.sh &>/dev/null 2>&1 &
-		sleep 3
+		nohup sh ${MODDIR}/Check_FRPC.sh &>/dev/null 2>&1 &
+		sleep 5
 	done
 fi

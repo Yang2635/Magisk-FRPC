@@ -3,15 +3,15 @@ MODDIR=${0%/*}
 DATADIR="/sdcard/Android"
 . ${MODDIR}/files/status.conf
 
-start_frpc(){
+Start_FRPC(){
 	nohup ${MODDIR}/files/bin/frpc-${F_ARCH} -c ${DATADIR}/frpc/frpc.ini &>/dev/null &
 }
 
-verify_frpc(){
+Verify_FRPC(){
 	${MODDIR}/files/bin/frpc-${F_ARCH} verify -c ${DATADIR}/frpc/frpc.ini
 }
 
-reload_frpc(){
+Reload_FRPC(){
 	${MODDIR}/files/bin/frpc-${F_ARCH} reload -c ${DATADIR}/frpc/frpc.ini
 }
 
@@ -19,13 +19,13 @@ reload_frpc(){
 if [[ $# -ne 0 ]]; then
 	case "$1" in
 		start)
-			start_frpc
+			Start_FRPC
 		;;
 		reload)
-			reload_frpc
+			Reload_FRPC
 		;;
 		verify)
-			verify_frpc
+			Verify_FRPC
 		;;
 	esac
 else

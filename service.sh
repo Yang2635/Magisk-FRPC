@@ -27,11 +27,18 @@ Set_Crond(){
 	[[ -s "${MODDIR}/crond/root" ]] || echo "*/1 * * * * sh ${MODDIR}/Check_FRPC.sh &>/dev/null" > ${MODDIR}/crond/root
 }
 
-[[ ! -d ${DATADIR}/frpc/logs ]] && mkdir -p ${DATADIR}/frpc/logs
-[[ ! -f ${DATADIR}/frpc/frpc.ini ]] && cp -af ${MODDIR}/files/frpc.ini ${DATADIR}/frpc/frpc.ini
-chmod -R 0644 ${MODDIR}/files/status.conf
+until [[ -d ${DATADIR}/frpc/logs ]]; do
+	mkdir -p ${DATADIR}/frpc/logs
+	sleep 3
+done
 
-if [[ -f "${Busybox_file}" ]] && [[ -x "${Busybox_file}" ]]; then
+until [[ -f ${DATADIR}/frpc/frpc.ini ]]; do
+	cp -af ${MODDIR}/files/frpc.ini ${DATADIR}/frpc/frpc.ini
+	sleep 3
+done
+[[ "$(stat -c %a ${MODDIR}/files/status.conf)" != "644"  ]] && chmod 0644 ${MODDIR}/files/status.conf
+
+if [[ -x "${Busybox_file}" ]]; then
 	Set_Crond
 	${Busybox_file} crond -c ${MODDIR}/crond
 elif [[ "$(which crond)" ]]; then

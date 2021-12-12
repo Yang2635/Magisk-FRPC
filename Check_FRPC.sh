@@ -11,9 +11,9 @@ PROCESS()
 	ps -ef | grep "frpc-${F_ARCH}" | grep -v grep | wc -l
 }
 
-runing_start(){
+Runing_Start(){
 	if [[ -f ${DATADIR}/frpc/frpc.ini ]]; then
-		sed -i "/^FILE_STATUS=/c FILE_STATUS=$(stat ${DATADIR}/frpc/frpc.ini | grep "Modify" | awk '{print $2,$3}' | sed "s/[^0-9]//g")" "${MODDIR}/files/status.conf"
+		sed -i "/^FILE_STATUS=/c FILE_STATUS=$(stat -c %Y ${DATADIR}/frpc/frpc.ini)" "${MODDIR}/files/status.conf"
 		sh ${MODDIR}/Run_FRPC.sh verify
 		if [[ $? -eq 0 ]]; then
 			sed -i "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=配置文件检测正确！" "${MODDIR}/files/status.conf"
@@ -32,9 +32,9 @@ runing_start(){
 	fi
 }
 
-check_reload(){
+Check_Reload(){
 	if [[ -f ${DATADIR}/frpc/frpc.ini ]]; then
-		check_new_file_status=$(stat ${DATADIR}/frpc/frpc.ini | grep "Modify" | awk '{print $2,$3}' | sed "s/[^0-9]//g")
+		check_new_file_status=$(stat -c %Y ${DATADIR}/frpc/frpc.ini)
 		if [[ "${FILE_STATUS}" != "$check_new_file_status" ]]; then
 			sh ${MODDIR}/Run_FRPC.sh verify
 			if [[ $? -eq 0 ]]; then
@@ -53,12 +53,12 @@ check_reload(){
 	fi
 }
 
-main(){
+Main(){
 	if [[ ! -f ${MODDIR}/disable ]]; then
 		if [[ $(PROCESS) -eq 0 ]]; then
-			runing_start
+			Runing_Start
 		else
-			check_reload
+			Check_Reload
 		fi
 	else
 		if [[ $(PROCESS) -ne 0 ]]; then
@@ -79,9 +79,9 @@ main(){
 if [[ ! -f "${Busybox_file}" ]] && [[ -z "$(which crond)" ]]; then
 	while :
 	do
-		main
+		Main
 		sleep 60
 	done
 else
-	main
+	Main
 fi

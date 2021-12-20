@@ -29,12 +29,12 @@ Set_Crond(){
 
 until [[ -d ${DATADIR}/frpc/logs ]]; do
 	mkdir -p ${DATADIR}/frpc/logs
-	sleep 3
+	sleep 1
 done
 
 until [[ -f ${DATADIR}/frpc/frpc.ini ]]; do
 	cp -af ${MODDIR}/files/frpc.ini ${DATADIR}/frpc/frpc.ini
-	sleep 3
+	sleep 1
 done
 [[ "$(stat -c %a ${MODDIR}/files/status.conf)" != "644"  ]] && chmod 0644 ${MODDIR}/files/status.conf
 
@@ -47,6 +47,6 @@ elif [[ "$(which crond)" ]]; then
 else
 	until [[ $(PROCESS) -ne 0 ]]; do
 		nohup sh ${MODDIR}/Check_FRPC.sh &>/dev/null 2>&1 &
-		sleep 5
+		sleep 3
 	done
 fi

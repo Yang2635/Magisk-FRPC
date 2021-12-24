@@ -1,6 +1,5 @@
 #!/system/bin/sh
 MODDIR=${0%/*}
-DATADIR="/sdcard/Android"
 . ${MODDIR}/files/status.conf
 
 Start_FRPC(){
@@ -15,6 +14,10 @@ Reload_FRPC(){
 	${MODDIR}/files/bin/frpc-${F_ARCH} reload -c ${DATADIR}/frpc/frpc.ini
 }
 
+Work_Status(){
+	${MODDIR}/files/bin/frpc-${F_ARCH} status -c ${DATADIR}/frpc/frpc.ini | grep "running" | wc -l
+}
+
 
 if [[ $# -ne 0 ]]; then
 	case "$1" in
@@ -26,6 +29,9 @@ if [[ $# -ne 0 ]]; then
 		;;
 		verify)
 			Verify_FRPC
+		;;
+		status)
+			Work_Status
 		;;
 	esac
 else

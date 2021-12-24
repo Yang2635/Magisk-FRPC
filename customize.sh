@@ -1,11 +1,13 @@
 SKIPUNZIP=1
 
-DATADIR="/sdcard/Android"
+DATADIR='/sdcard/Android'
+VERSION='v2.6'
+VERSIONCODE='20211221'
 
 unzip -o "${ZIPFILE}" 'module.prop' -d "${TMPDIR}" >&2
 [[ ! -f "${TMPDIR}/module.prop" ]] && abort "! 未找到module.prop文件，安装结束！"
 
-MyPrint() 
+Cus_Print() 
 {
 	ui_print "$@"
 	sleep 0.03
@@ -18,7 +20,7 @@ unzip -o "$ZIPFILE" "META-INF/com/google/android/*" -d "${TMPDIR}" >&2
 [ -f "$file_path" ] || abort "! $file 不存在！"
 if [ -f "$hash_path" ]; then
   (echo "$(cat "$hash_path")  $file_path" | sha256sum -c -s -) || abort "！$file 校验失败！"
-  MyPrint "- 校验：$file" >&1
+  Cus_Print "- 校验：$file" >&1
 else
   abort "！缺少校验文件！"
 fi
@@ -50,7 +52,7 @@ extract() {
   [ -f "$hash_path" ] || abort "! $file.sha256sum 不存在！"
 
   (echo "$(cat "$hash_path")  $file_path" | sha256sum -c -s -) || abort "! $file 校验错误！"
-  MyPrint "- 校验：$file" >&1
+  Cus_Print "- 校验：$file" >&1
 }
 
 author="`grep_prop author $TMPDIR/module.prop`"
@@ -104,8 +106,8 @@ Check_ARCH(){
 		F_ARCH=$ARCH
 	;;
 	*)
-		MyPrint "- 不支持的架构: $ARCH"
-		MyPrint " "
+		Cus_Print "- 不支持的架构: $ARCH"
+		Cus_Print " "
 		abort "! 安装结束！"
 	;;
 	esac
@@ -113,46 +115,45 @@ Check_ARCH(){
 
 Check_Crond(){
 	Busybox_file="${MODPATH}/files/bin/busybox_${F_ARCH}"
-	if [[ -f "${Busybox_file}" ]] && [[ -x "${Busybox_file}" ]]; then
-		MyPrint "- 已优先使用模块的定时任务方式检测运行状态！"
+	if [[ -x "${Busybox_file}" ]]; then
+		Cus_Print "- 已优先使用模块的定时任务方式检测运行状态！"
 		sed -i "/^RUNNING_METHOD=/c RUNNING_METHOD=定时任务（模块提供）" "${MODPATH}/files/status.conf"
 	elif [[ "$(which crond)" ]]; then
-		MyPrint "- 设备重启后将以定时任务方式检测运行状态！"
+		Cus_Print "- 设备重启后将以定时任务方式检测运行状态！"
 		sed -i "/^RUNNING_METHOD=/c RUNNING_METHOD=定时任务" "${MODPATH}/files/status.conf"
 	else
-		MyPrint "- 设备重启后将以默认方式检测运行状态！"
+		Cus_Print "- 设备重启后将以默认方式检测运行状态！"
 		sed -i "/^RUNNING_METHOD=/c RUNNING_METHOD=默认" "${MODPATH}/files/status.conf"
 	fi
 }
 
-
-MyPrint " "
-MyPrint "(#) 设备信息： "
-MyPrint "- 品牌: `getprop ro.product.brand`"
-MyPrint "- 代号: `getprop ro.product.device`"
-MyPrint "- 模型: `getprop ro.product.model`"
-MyPrint "- 安卓版本: `getprop ro.build.version.release`"
-[[ "`getprop ro.miui.ui.version.name`" != "" ]] && MyPrint "- MIUI版本: MIUI `getprop ro.miui.ui.version.name` - `getprop ro.build.version.incremental`"
-MyPrint "- 内核版本: `uname -osr`"
-MyPrint "- 运存大小: `free -m | grep -E "^Mem|^内存" | awk '{printf("总量：%s MB，已用：%s MB，剩余：%s MB，使用率：%.2f%%",$2,$3,($2-$3),($3/$2*100))}'`"
-MyPrint "- Swap大小: `free -m | grep -E "^Swap|^交换" | awk '{printf("总量：%s MB，已用：%s MB，剩余：%s MB，使用率：%.2f%%",$2,$3,$4,($3/$2*100))}'`"
-MyPrint " "
-MyPrint "(@) 模块信息："
-MyPrint "- 名称: $name"
-MyPrint "- 作者：$author"
-MyPrint " "
+Cus_Print " "
+Cus_Print "(#) 设备信息： "
+Cus_Print "- 品牌: `getprop ro.product.brand`"
+Cus_Print "- 代号: `getprop ro.product.device`"
+Cus_Print "- 模型: `getprop ro.product.model`"
+Cus_Print "- 安卓版本: `getprop ro.build.version.release`"
+[[ "`getprop ro.miui.ui.version.name`" != "" ]] && Cus_Print "- MIUI版本: MIUI `getprop ro.miui.ui.version.name` - `getprop ro.build.version.incremental`"
+Cus_Print "- 内核版本: `uname -osr`"
+Cus_Print "- 运存大小: `free -m | grep -E "^Mem|^内存" | awk '{printf("总量：%s MB，已用：%s MB，剩余：%s MB，使用率：%.2f%%",$2,$3,($2-$3),($3/$2*100))}'`"
+Cus_Print "- Swap大小: `free -m | grep -E "^Swap|^交换" | awk '{printf("总量：%s MB，已用：%s MB，剩余：%s MB，使用率：%.2f%%",$2,$3,$4,($3/$2*100))}'`"
+Cus_Print " "
+Cus_Print "(@) 模块信息："
+Cus_Print "- 名称: $name"
+Cus_Print "- 作者：$author"
+Cus_Print " "
 Sdcard_RW
 [[ $? -ne 0 ]] && abort "! ${DATADIR} 目录读写测试失败，安装结束！"
 Check_ARCH
-MyPrint "- 设备架构：$ARCH"
-MyPrint " "
-MyPrint "(?) 确认安装吗？(请选择)"
-MyPrint "- 按音量键＋: 安装 √"
-MyPrint "- 按音量键－: 退出 ×"
+Cus_Print "- 设备架构：$ARCH"
+Cus_Print " "
+Cus_Print "(?) 确认安装吗？(请选择)"
+Cus_Print "- 按音量键＋: 安装 √"
+Cus_Print "- 按音量键－: 退出 ×"
 if [[ $(get_choose) -eq 0 ]]; then
-	MyPrint "- 已选择安装"
-	MyPrint " "
-	MyPrint "- 正在释放文件并校验文件"
+	Cus_Print "- 已选择安装"
+	Cus_Print " "
+	Cus_Print "- 正在释放、校验文件"
 	extract "${ZIPFILE}" "files/bin/frpc-${F_ARCH}" "${MODPATH}/files/bin" true
 	extract "${ZIPFILE}" "files/bin/busybox_${F_ARCH}" "${MODPATH}/files/bin" true
 	extract "${ZIPFILE}" "service.sh" "${MODPATH}"
@@ -164,45 +165,47 @@ if [[ $(get_choose) -eq 0 ]]; then
 	extract "${ZIPFILE}" "files/status.conf" "${MODPATH}/files" true
 	extract "${ZIPFILE}" "files/frpc.ini" "${MODPATH}/files" true
 	extract "${ZIPFILE}" "files/frpc_full.ini" "${MODPATH}/files" true
-	MyPrint "- 文件释放完成！正在设置权限"
+	Cus_Print "- 文件释放完成！正在设置权限"
 	set_perm_recursive $MODPATH 0 0 0755 0644
 	set_perm_recursive  $MODPATH/files/bin 0 0 0755 0700
-	MyPrint "- 权限设置完成！"
-	MyPrint " "
+	Cus_Print "- 权限设置完成！"
+	Cus_Print " "
 	Check_Crond
-	sed -i "/^F_ARCH=/c F_ARCH=${F_ARCH}" "${MODPATH}/files/status.conf"
-	MyPrint " "
+	sed -i -e "/^F_ARCH=/c F_ARCH=${F_ARCH}" -e "/^DATADIR=/c DATADIR=\'${DATADIR}\'" "${MODPATH}/files/status.conf"
+	FRP_VERSION=$(${MODPATH}/files/bin/frpc-${F_ARCH} -v)
+	sed -i -e "/^version=/c version=${VERSION}-\(frpc\: v${FRP_VERSION}\)" -e "/^versionCode=/c versionCode=${VERSIONCODE}" "${MODPATH}/module.prop"
+	Cus_Print " "
 	if [[ -f $DATADIR/frpc/frpc.ini ]]; then
 		cp -af $MODPATH/update_log.md $DATADIR/frpc/
-		MyPrint "- 存在旧配置文件 是否保留原配置文件？(请选择)"
-		MyPrint "- 按音量键＋: 保留"
-		MyPrint "- 按音量键－: 替换"
+		Cus_Print "- 存在旧配置文件 是否保留原配置文件？(请选择)"
+		Cus_Print "- 按音量键＋: 保留"
+		Cus_Print "- 按音量键－: 替换"
 		if [[ $(get_choose) -eq 1 ]]; then
-			MyPrint "- 已选择替换备份原配置文件"
+			Cus_Print "- 已选择替换备份原配置文件"
 			now_date=$(date "+%Y%m%d%H%M%S")
 			mv $DATADIR/frpc/frpc.ini $DATADIR/frpc/backup_${now_date}-frpc.ini
-			MyPrint "- 已备份保存为 Android/frpc/backup_${now_date}-frpc.ini"
+			Cus_Print "- 已备份保存为 Android/frpc/backup_${now_date}-frpc.ini"
 			cp -af $MODPATH/files/frpc.ini $DATADIR/frpc/
-			MyPrint "- 创建新文件"
-			MyPrint " "
+			Cus_Print "- 创建新文件"
+			Cus_Print " "
 		else
-			MyPrint "- 已选择保留原配置文件"
-			MyPrint " "
+			Cus_Print "- 已选择保留原配置文件"
+			Cus_Print " "
 		fi
 	else
 		if [[ ! -d $DATADIR/frpc ]]; then
 			mkdir -p $DATADIR/frpc
-			MyPrint "- 创建配置文件目录 Android/frpc 完成"
-			MyPrint " "
+			Cus_Print "- 创建配置文件目录 Android/frpc 完成"
+			Cus_Print " "
 		elif [[ ! -d $DATADIR/frpc/logs ]]; then
 			mkdir $DATADIR/frpc/logs
-			MyPrint "- 创建日志目录 Android/frpc/logs 完成"
-			MyPrint " "
+			Cus_Print "- 创建日志目录 Android/frpc/logs 完成"
+			Cus_Print " "
 		fi
 		cp -af $MODPATH/files/frpc*.ini $MODPATH/update_log.md $DATADIR/frpc/
-		MyPrint "- 已创建配置文件！"
-		MyPrint "- 请前往 Android/frpc目录查看frpc.ini文件内使用说明并配置文件！"
-		MyPrint "- 然后进行设备重启即可！"
+		Cus_Print "- 已创建配置文件！"
+		Cus_Print "- 请前往 Android/frpc目录查看frpc.ini文件内使用说明并配置文件！"
+		Cus_Print "- 然后进行设备重启即可！"
 	fi
 else
 	abort "! 已选择退出"

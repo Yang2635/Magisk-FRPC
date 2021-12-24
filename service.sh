@@ -2,14 +2,16 @@
 MODDIR=${0%/*}
 . ${MODDIR}/files/status.conf
 
-DATADIR="/sdcard/Android"
 Busybox_file="${MODDIR}/files/bin/busybox_${F_ARCH}"
 
 until [[ $(getprop sys.boot_completed) -eq 1 ]]; do
 	sleep 1
 done
 
-sed -i -e "/^RELOAD_NUM=/c RELOAD_NUM=NULL" -e "/^RUNNING_STATUS=/c RUNNING_STATUS=FRPC未运行！" -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=未进行配置文件检测！" "${MODDIR}/files/status.conf"
+sed -i -e "/^RELOAD_NUM=/c RELOAD_NUM=NULL" \
+-e "/^RUNNING_STATUS=/c RUNNING_STATUS=FRPC未运行！" \
+-e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=未进行配置文件检测！" \
+-e "/^RUNNING_NUM=/c RUNNING_NUM=NULL" "${MODDIR}/files/status.conf"
 
 PROCESS()
 {

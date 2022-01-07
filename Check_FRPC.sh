@@ -29,8 +29,7 @@ Runing_Start(){
 			if [[ $(PROCESS) -ne 0 ]]; then
 				Running_NUM=$(sh ${MODDIR}/Run_FRPC.sh status)
 				sed -i -e "/^RUNNING_STATUS=/c RUNNING_STATUS=FRPC正在运行中！" \
-				-e "/^RELOAD_NUM=/c RELOAD_NUM=0" -e "/^RUNNING_NUM=/c RUNNING_NUM=${Running_NUM}" \
-				"${MODDIR}/files/status.conf"
+				-e "/^RELOAD_NUM=/c RELOAD_NUM=0" -e "/^RUNNING_NUM=/c RUNNING_NUM=${Running_NUM}" "${MODDIR}/files/status.conf"
 			else
 				sed -i "/^RUNNING_STATUS=/c RUNNING_STATUS=FRPC启动失败！" "${MODDIR}/files/status.conf"
 			fi
@@ -54,8 +53,7 @@ Check_Reload(){
 				if [[ $? -eq 0 ]]; then
 					sleep 2
 					Running_NUM=$(sh ${MODDIR}/Run_FRPC.sh status)
-					sed -i -e "/^RELOAD_NUM=/c RELOAD_NUM=$(($RELOAD_NUM+1))" \ 
-					-e "/^FILE_STATUS=/c FILE_STATUS=${check_new_file_status}" \
+					sed -i -e "/^RELOAD_NUM=/c RELOAD_NUM=$(($RELOAD_NUM+1))" -e "/^FILE_STATUS=/c FILE_STATUS=${check_new_file_status}" \
 					-e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=配置文件检测正确！" \
 					-e "/^RUNNING_NUM=/c RUNNING_NUM=${Running_NUM}" "${MODDIR}/files/status.conf"
 				else

@@ -1,8 +1,8 @@
 SKIPUNZIP=1
 
 DATADIR='/sdcard/Android'
-VERSION='v2.6'
-VERSIONCODE='20211221'
+VERSION='v2.7'
+VERSIONCODE='20220107'
 
 unzip -o "${ZIPFILE}" 'module.prop' -d "${TMPDIR}" >&2
 [[ ! -f "${TMPDIR}/module.prop" ]] && abort "! 未找到module.prop文件，安装结束！"

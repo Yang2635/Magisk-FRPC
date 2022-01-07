@@ -151,9 +151,9 @@ Cus_Print "(?) 确认安装吗？(请选择)"
 Cus_Print "- 按音量键＋: 安装 √"
 Cus_Print "- 按音量键－: 退出 ×"
 if [[ $(get_choose) -eq 0 ]]; then
-	Cus_Print "- 已选择安装"
+	Cus_Print "- 已选择安装！"
 	Cus_Print " "
-	Cus_Print "- 正在释放、校验文件"
+	Cus_Print "- 正在释放、校验文件！"
 	extract "${ZIPFILE}" "files/bin/frpc-${F_ARCH}" "${MODPATH}/files/bin" true
 	extract "${ZIPFILE}" "files/bin/busybox_${F_ARCH}" "${MODPATH}/files/bin" true
 	extract "${ZIPFILE}" "service.sh" "${MODPATH}"
@@ -165,7 +165,7 @@ if [[ $(get_choose) -eq 0 ]]; then
 	extract "${ZIPFILE}" "files/status.conf" "${MODPATH}/files" true
 	extract "${ZIPFILE}" "files/frpc.ini" "${MODPATH}/files" true
 	extract "${ZIPFILE}" "files/frpc_full.ini" "${MODPATH}/files" true
-	Cus_Print "- 文件释放完成！正在设置权限"
+	Cus_Print "- 文件释放完成！正在设置权限！"
 	set_perm_recursive $MODPATH 0 0 0755 0644
 	set_perm_recursive  $MODPATH/files/bin 0 0 0755 0700
 	Cus_Print "- 权限设置完成！"
@@ -175,36 +175,48 @@ if [[ $(get_choose) -eq 0 ]]; then
 	FRP_VERSION=$(${MODPATH}/files/bin/frpc-${F_ARCH} -v)
 	sed -i -e "/^version=/c version=${VERSION}-\(frpc\: v${FRP_VERSION}\)" -e "/^versionCode=/c versionCode=${VERSIONCODE}" "${MODPATH}/module.prop"
 	Cus_Print " "
+	Cus_Print "(?) 是否息屏检测配置文件状态？(请选择)"
+	Cus_Print "- 按音量键＋: 检  测 √"
+	Cus_Print "- 按音量键－: 不检测 ×"
+	if [[ $(get_choose) -eq 0 ]]; then
+		sed -i -e "/^SCREEN_STATUS=/c SCREEN_STATUS=yes" "${MODPATH}/files/status.conf"
+		Cus_Print "- 设备息屏将检测配置文件状态！"
+		Cus_Print " "
+	else
+		sed -i -e "/^SCREEN_STATUS=/c SCREEN_STATUS=no" "${MODPATH}/files/status.conf"
+		Cus_Print "- 设备息屏将不检测配置文件状态！"
+		Cus_Print " "
+	fi
 	if [[ -f $DATADIR/frpc/frpc.ini ]]; then
 		cp -af $MODPATH/update_log.md $DATADIR/frpc/
-		Cus_Print "- 存在旧配置文件 是否保留原配置文件？(请选择)"
+		Cus_Print "(?) 存在旧配置文件，是否保留原配置文件？(请选择)"
 		Cus_Print "- 按音量键＋: 保留"
 		Cus_Print "- 按音量键－: 替换"
 		if [[ $(get_choose) -eq 1 ]]; then
-			Cus_Print "- 已选择替换备份原配置文件"
+			Cus_Print "- 已选择替换备份原配置文件！"
 			now_date=$(date "+%Y%m%d%H%M%S")
 			mv $DATADIR/frpc/frpc.ini $DATADIR/frpc/backup_${now_date}-frpc.ini
 			Cus_Print "- 已备份保存为 Android/frpc/backup_${now_date}-frpc.ini"
 			cp -af $MODPATH/files/frpc.ini $DATADIR/frpc/
-			Cus_Print "- 创建新文件"
+			Cus_Print "- 已创建新文件！"
 			Cus_Print " "
 		else
-			Cus_Print "- 已选择保留原配置文件"
+			Cus_Print "- 已选择保留原配置文件！"
 			Cus_Print " "
 		fi
 	else
 		if [[ ! -d $DATADIR/frpc ]]; then
 			mkdir -p $DATADIR/frpc
-			Cus_Print "- 创建配置文件目录 Android/frpc 完成"
+			Cus_Print "- 创建配置文件目录frpc完成！"
 			Cus_Print " "
 		elif [[ ! -d $DATADIR/frpc/logs ]]; then
 			mkdir $DATADIR/frpc/logs
-			Cus_Print "- 创建日志目录 Android/frpc/logs 完成"
+			Cus_Print "- 创建日志目录frpc/logs完成！"
 			Cus_Print " "
 		fi
 		cp -af $MODPATH/files/frpc*.ini $MODPATH/update_log.md $DATADIR/frpc/
 		Cus_Print "- 已创建配置文件！"
-		Cus_Print "- 请前往 Android/frpc目录查看frpc.ini文件内使用说明并配置文件！"
+		Cus_Print "- 请前往 ${DATADIR}/frpc目录查看frpc.ini文件内使用说明并配置文件！"
 		Cus_Print "- 然后进行设备重启即可！"
 	fi
 else

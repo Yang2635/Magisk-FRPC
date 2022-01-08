@@ -1,6 +1,8 @@
 #!/system/bin/sh
 
 MODDIR=${0%/*}
+. ${MODDIR}/files/status.conf
+Busybox_file="${MODDIR}/files/bin/busybox_${F_ARCH}"
 
 PROCESS(){
 	ps -ef | grep "frpc-${F_ARCH}" | grep -v grep | wc -l
@@ -107,8 +109,6 @@ Main(){
 }
 
 Start(){
-	. ${MODDIR}/files/status.conf
-	Busybox_file="${MODDIR}/files/bin/busybox_${F_ARCH}"
 	if [[ ${SCREEN_STATUS} == 'yes' ]]; then
 		Main
 	elif [[ $(Screen_status) -eq 0 ]]; then

@@ -2,6 +2,13 @@
 
 让你的手机等终端设备运行FRPC程序。程序依赖Magisk，请自行安装Magisk模块后使用。
 
+## v2.8
+
+**Happy Chinese New Year!**
+
+- 更新：FRPC程序为v0.39.0，点击查看[FRPC更新日志](https://github.com/fatedier/frp/releases/tag/v0.39.0)
+- 为Magisk 24.0+增加在线更新
+
 ## v2.7
 
 - 修正：可能出现的错误

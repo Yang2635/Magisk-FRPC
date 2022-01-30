@@ -4,3 +4,4 @@ version=v2.6
 versionCode=20211211
 author=Yang2635
 description=使用Magisk挂载运行通用FRPC程序。[第一次安装请前往相应目录配置规则文件，重启设备后查看FRPC运行状态！(若已配置，请重启设备)]
+updateJson="https://yang2635.github.io/releases/Magisk-FRPC.json"

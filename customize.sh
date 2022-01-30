@@ -1,8 +1,8 @@
 SKIPUNZIP=1
 
 DATADIR='/sdcard/Android'
-VERSION='v2.7'
-VERSIONCODE='20220107'
+VERSION='v2.8'
+VERSIONCODE='20220130'
 
 unzip -o "${ZIPFILE}" 'module.prop' -d "${TMPDIR}" >&2
 [[ ! -f "${TMPDIR}/module.prop" ]] && abort "! 未找到module.prop文件，安装结束！"
@@ -167,7 +167,7 @@ if [[ $(get_choose) -eq 0 ]]; then
 	extract "${ZIPFILE}" "files/frpc_full.ini" "${MODPATH}/files" true
 	Cus_Print "- 文件释放完成！正在设置权限！"
 	set_perm_recursive $MODPATH 0 0 0755 0644
-	set_perm_recursive  $MODPATH/files/bin 0 0 0755 0700
+	set_perm_recursive  $MODPATH/files/bin 0 0 0755 0755
 	Cus_Print "- 权限设置完成！"
 	Cus_Print " "
 	Check_Crond

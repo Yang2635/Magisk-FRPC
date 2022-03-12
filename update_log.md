@@ -2,6 +2,11 @@
 
 让你的手机等终端设备运行FRPC程序。程序依赖Magisk，请自行安装Magisk模块后使用。
 
+## v2.9.1
+
+- 修复：含有busybox指令环境致使的系统命令调用错误
+- 修复：文件在Magisk更新链接下载安装时提示“缺失校验文件”
+
 ## V2.9
 
 - 更新：FRPC程序为**v0.40.0**，点击查看[FRPC更新日志](https://github.com/fatedier/frp/releases/tag/v0.40.0)

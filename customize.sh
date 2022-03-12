@@ -21,7 +21,7 @@ if [ -f "${hash_path}" ]; then
   (echo "$(cat "${hash_path}")  ${file_path}" | sha256sum -c -s -) || abort "！校验：${file} 错误！"
   Cus_Print "- 校验：${file}" >&1
 else
-  abort "！缺少校验文件！"
+  Cus_Print "- 从Magisk在线更新"
 fi
 
 # extract <zip> <file> <target dir> <junk paths>

@@ -4,8 +4,33 @@ MODDIR=${0%/*}
 . ${MODDIR}/files/status.conf
 Busybox_file="${MODDIR}/files/bin/busybox_${F_ARCH}"
 
+FRPC_PID_Check(){
+	FRPC_PID=''
+	if [[ -f ${MODDIR}/files/FRPC_RUN.pid ]]; then
+		FRPC_PID=$(cat ${MODDIR}/files/FRPC_RUN.pid)
+	fi
+}
+
 PROCESS(){
 	ps -ef | grep "frpc-${F_ARCH}" | grep -v grep | wc -l
+}
+
+FRPC_VmRSS_Check(){
+	FRPC_PID_Check
+	if [[ -n ${FRPC_PID} ]]; then
+		egrep "^VmRSS" /proc/${FRPC_PID}/status | grep -Eo "[0-9]{0,}" | awk '{printf("%.2fMB",($1/1024))}'
+	else
+		echo "FRPC未运行！"
+	fi
+}
+
+FRPC_CPU_Usage_Check(){
+	FRPC_PID_Check
+	if [[ -n ${FRPC_PID} ]]; then
+		ps --pid=${FRPC_PID} -o pcpu | grep -v "CPU" | awk '{printf("%s%%",$1)}'
+	else
+		echo "无进程！"
+	fi
 }
 
 Battery_Charge(){
@@ -71,9 +96,14 @@ Check_Reload(){
 }
 
 Main(){
+	local FRPC_CPU_Usage
+	local FRPC_VmRSS
 	if [[ $(Battery_Electricity) -lt 20 ]] && [[ $(Battery_Charge) -eq 0 ]]; then
-		if [[ $(PROCESS) -ne 0 ]]; then
-			kill -9 $(ps -ef | grep "frpc-${F_ARCH}" | grep -v grep | awk '{ print $2 }')
+		#if [[ $(PROCESS) -ne 0 ]]; then
+		FRPC_PID_Check
+		if [[ -n ${FRPC_PID} ]]; then
+		#	kill -9 $(ps -ef | grep "frpc-${F_ARCH}" | grep -v grep | awk '{ print $2 }')
+			kill -9 ${FRPC_PID} && rm -rf "${MODDIR}/files/FRPC_RUN.pid"
 			if [[ $? -eq 0 ]]; then
 				sed -i -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=已自动停止检测！" \
 				-e "/^RUNNING_STATUS=/c RUNNING_STATUS=当前电量低于20%且未在充电，自动停止运行！" \
@@ -91,8 +121,11 @@ Main(){
 			Check_Reload
 		fi
 	else
-		if [[ $(PROCESS) -ne 0 ]]; then
-			kill -9 $(ps -ef | grep "frpc-${F_ARCH}" | grep -v grep | awk '{ print $2 }')
+		#if [[ $(PROCESS) -ne 0 ]]; then
+		FRPC_PID_Check
+		if [[ -n ${FRPC_PID} ]]; then
+		#	kill -9 $(ps -ef | grep "frpc-${F_ARCH}" | grep -v grep | awk '{ print $2 }')
+			kill -9 ${FRPC_PID} && rm -rf "${MODDIR}/files/FRPC_RUN.pid"
 			if [[ $? -eq 0 ]]; then
 				sed -i -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=已手动停止检测！" \
 				-e "/^RUNNING_STATUS=/c RUNNING_STATUS=已手动停止运行（重新打开则自动重启FRPC，无需设备重启）" \
@@ -100,11 +133,14 @@ Main(){
 			fi
 		fi
 	fi
+	FRPC_CPU_Usage=$(FRPC_CPU_Usage_Check)
+	FRPC_VmRSS=$(FRPC_VmRSS_Check)
+	sleep 1
 	. ${MODDIR}/files/status.conf
 	if [[ ! -f ${MODDIR}/update ]]; then
-		sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：$RUNNING_STATUS ]，[配置文件状态：$CHECK_FILE_STATUS；穿透服务数：$RUNNING_NUM，自动重载配置文件 $RELOAD_NUM 次]，[检测方式：$RUNNING_METHOD]" "${MODDIR}/module.prop"
+		sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：$RUNNING_STATUS；CPU占用（非实时）：${FRPC_CPU_Usage:-NuLL}；物理内存占用：${FRPC_VmRSS:-NuLL}]，[配置文件状态：$CHECK_FILE_STATUS；穿透服务数：$RUNNING_NUM，自动重载配置文件 $RELOAD_NUM 次]，[检测方式：$RUNNING_METHOD]" "${MODDIR}/module.prop"
 	else
-		sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：$RUNNING_STATUS ]，[配置文件状态：$CHECK_FILE_STATUS；穿透服务数：$RUNNING_NUM，自动重载配置文件 $RELOAD_NUM 次]，[检测方式：$RUNNING_METHOD]（模块新设定将在设备重启后生效！）" "${MODDIR}/module.prop"
+		sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：$RUNNING_STATUS，CPU占用（非实时）：${FRPC_CPU_Usage:-Null}；物理内存占用：${FRPC_VmRSS:-NuLL}]，[配置文件状态：$CHECK_FILE_STATUS；穿透服务数：$RUNNING_NUM，自动重载配置文件 $RELOAD_NUM 次]，[检测方式：$RUNNING_METHOD]（模块新设定将在设备重启后生效！）" "${MODDIR}/module.prop"
 	fi
 }
 
@@ -114,6 +150,7 @@ Start(){
 	elif [[ $(Screen_status) -eq 0 ]]; then
 		Main
 	fi
+
 }
 
 if [[ ! -f "${Busybox_file}" ]] && [[ -z "$(which crond)" ]]; then

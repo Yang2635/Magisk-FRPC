@@ -12,13 +12,13 @@ FRPC_PID_Check(){
 }
 
 PROCESS(){
-	ps -ef | grep "frpc-${F_ARCH}" | grep -v grep | wc -l
+	/system/bin/ps -ef | grep "frpc-${F_ARCH}" | grep -v grep | wc -l
 }
 
 FRPC_VmRSS_Check(){
 	FRPC_PID_Check
 	if [[ -n ${FRPC_PID} ]]; then
-		egrep "^VmRSS" /proc/${FRPC_PID}/status | grep -Eo "[0-9]{0,}" | awk '{printf("%.2fMB",($1/1024))}'
+		awk '/^VmRSS/{printf("%.2fMB",($2/1024))}' /proc/${FRPC_PID}/status
 	else
 		echo "FRPC未运行！"
 	fi
@@ -27,7 +27,7 @@ FRPC_VmRSS_Check(){
 FRPC_CPU_Usage_Check(){
 	FRPC_PID_Check
 	if [[ -n ${FRPC_PID} ]]; then
-		ps --pid=${FRPC_PID} -o pcpu | grep -v "CPU" | awk '{printf("%s%%",$1)}'
+		/system/bin/ps --pid=${FRPC_PID} -o pcpu | grep -v "CPU" | awk '{printf("%s%%",$1)}'
 	else
 		echo "无进程！"
 	fi
@@ -150,7 +150,6 @@ Start(){
 	elif [[ $(Screen_status) -eq 0 ]]; then
 		Main
 	fi
-
 }
 
 if [[ ! -f "${Busybox_file}" ]] && [[ -z "$(which crond)" ]]; then

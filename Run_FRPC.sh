@@ -4,6 +4,7 @@ MODDIR=${0%/*}
 
 Start_FRPC(){
 	nohup ${MODDIR}/files/bin/frpc-${F_ARCH} -c ${DATADIR}/frpc/frpc.ini &>/dev/null &
+	echo "$!" >${MODDIR}/files/FRPC_RUN.pid
 }
 
 Verify_FRPC(){

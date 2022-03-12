@@ -13,8 +13,7 @@ sed -i -e "/^RELOAD_NUM=/c RELOAD_NUM=NULL" \
 -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=未进行配置文件检测！" \
 -e "/^RUNNING_NUM=/c RUNNING_NUM=NULL" "${MODDIR}/files/status.conf"
 
-PROCESS()
-{
+PROCESS(){
 	ps -ef | grep "Check_FRPC.sh" | grep -v grep | wc -l
 }
 

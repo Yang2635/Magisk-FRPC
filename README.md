@@ -39,6 +39,14 @@ After the module is installed, please browse the frpc.ini file under the Android
 - 可在Magisk模块中开启或关闭来控制FRPC程序启动与结束。
 - 设备电量低于20%且未在充电自动终止FRPC程序，请保持设备电量充足！
 
+## How to build？
+
+The traditional direct zip package construction method is not feasible, so I wrote a build script, you can refer to the article: https://www.isisy.com/1276.html
+
+---
+
+传统的直接打zip包构建方式已不可行，为此写了一份构建脚本，可参考文章：https://www.isisy.com/1276.html
+
 ## Thanks
 
 - https://github.com/topjohnwu/Magisk

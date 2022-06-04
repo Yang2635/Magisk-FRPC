@@ -1,4 +1,1 @@
-#!/system/bin/sh
-if [ -d "/sdcard/Android/frpc" ]; then
-	rm -rf "/sdcard/Android/frpc" 2>/dev/null
-fi
+[ -d "/sdcard/Android/frpc" ] && rm -rf "/sdcard/Android/frpc"

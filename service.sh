@@ -41,12 +41,15 @@ fi
 if [ -x "${MAGISK_BUSYBOX_PATH}" ]; then
   set_crond
   ${MAGISK_BUSYBOX_PATH} crond -c ${MODDIR}/crond
+  sh ${MODDIR}/Check_FRPC.sh &>/dev/null
 elif [ "$(which crond)" ]; then
   set_crond
   crond -c ${MODDIR}/crond
+  sh ${MODDIR}/Check_FRPC.sh &>/dev/null
 elif [ -x "${cus_busybox_file}" ]; then
   set_crond
   ${cus_busybox_file} crond -c ${MODDIR}/crond
+  sh ${MODDIR}/Check_FRPC.sh &>/dev/null
 else
   sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：未检测到busybox或系统环境中无crond命令！]" "${MODDIR}/module.prop"
   exit 1

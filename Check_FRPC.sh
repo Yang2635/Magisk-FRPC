@@ -44,7 +44,7 @@ running_start() {
 }
 
 check_reload() {
-  local frpc_admin_port running_num
+  local frpc_admin_port running_num check_new_file_status
   if [ -f ${DATADIR}/frpc/frpc.ini ]; then
     check_new_file_status="$(stat -c %Y ${DATADIR}/frpc/frpc.ini)"
     if [ "${FILE_STATUS}" != "${check_new_file_status}" ]; then
@@ -70,11 +70,12 @@ check_reload() {
 }
 
 main() {
-  local FRPC_CPU_Usage FRPC_VmRSS
+  local frpc_cpu_usage frpc_vmrss
+  local frpc_pid_num="$(frpc_running_check frpc-${F_ARCH})"
   if [ "$(battery_electricity)" -lt 20 ] && [ "$(battery_charge)" -eq 0 ]; then
-    if [ -n "$(frpc_running_check frpc-${F_ARCH})" ]; then
+    if [ -n "${frpc_pid_num}" ]; then
       {
-        kill -9 "$(frpc_running_check frpc-${F_ARCH})"
+        kill -9 "${frpc_pid_num}"
         rm -f "${MODDIR}/files/frpc_run.pid"
       }
       if [ "$?" -eq 0 ]; then
@@ -83,16 +84,16 @@ main() {
           -e "/^RUNNING_NUM=/c RUNNING_NUM=已自动停止检测！" "${MODDIR}/files/status.conf"
       fi
     fi
-  elif [ ! -f ${MODDIR}/disable ]; then
-    if [ -z "$(frpc_running_check frpc-${F_ARCH})" ]; then
+  elif [ ! -f "${MODDIR}/disable" ]; then
+    if [ -z "${frpc_pid_num}" ]; then
       running_start
-    elif [ -n "$(frpc_running_check frpc-${F_ARCH})" ]; then
+    elif [ -n "${frpc_pid_num}" ]; then
       check_reload
     fi
   else
-    if [ -n "$(frpc_running_check frpc-${F_ARCH})" ]; then
+    if [ -n "${frpc_pid_num}" ]; then
       {
-        kill -9 "$(frpc_running_check frpc-${F_ARCH})"
+        kill -9 "${frpc_pid_num}"
         rm -f "${MODDIR}/files/frpc_run.pid"
       }
       if [ "$?" -eq 0 ]; then
@@ -102,14 +103,14 @@ main() {
       fi
     fi
   fi
-  FRPC_CPU_Usage=$(frpc_cpu_usage_check frpc-${F_ARCH})
-  FRPC_VmRSS=$(frpc_vmrss_check frpc-${F_ARCH})
+  frpc_cpu_usage="$(frpc_cpu_usage_check frpc-${F_ARCH})"
+  frpc_vmrss="$(frpc_vmrss_check frpc-${F_ARCH})"
   sleep 1
   . ${MODDIR}/files/status.conf
   if [ ! -f ${MODDIR}/update ]; then
-    sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：${RUNNING_STATUS}；CPU占用（AVG）：${FRPC_CPU_Usage:-NuLL}；物理内存占用：${FRPC_VmRSS:-NuLL}]，[配置文件状态：${CHECK_FILE_STATUS}；穿透服务数：${RUNNING_NUM}，自动重载配置文件 ${RELOAD_NUM} 次]" "${MODDIR}/module.prop"
+    sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：${RUNNING_STATUS}；CPU占用（AVG）：${frpc_cpu_usage:-NuLL}；物理内存占用：${frpc_vmrss:-NuLL}]，[配置文件状态：${CHECK_FILE_STATUS}；穿透服务数：${RUNNING_NUM}，自动重载配置文件 ${RELOAD_NUM} 次]" "${MODDIR}/module.prop"
   else
-    sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：${RUNNING_STATUS}，CPU占用（AVG）：${FRPC_CPU_Usage:-Null}；物理内存占用：${FRPC_VmRSS:-NuLL}]，[配置文件状态：${CHECK_FILE_STATUS}；穿透服务数：${RUNNING_NUM}，自动重载配置文件 ${RELOAD_NUM} 次]（模块新设定将在设备重启后生效！）" "${MODDIR}/module.prop"
+    sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：${RUNNING_STATUS}，CPU占用（AVG）：${frpc_cpu_usage:-Null}；物理内存占用：${frpc_vmrss:-NuLL}]，[配置文件状态：${CHECK_FILE_STATUS}；穿透服务数：${RUNNING_NUM}，自动重载配置文件 ${RELOAD_NUM} 次]（模块新设定将在设备重启后生效！）" "${MODDIR}/module.prop"
   fi
 }
 

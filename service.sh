@@ -3,6 +3,9 @@ MODDIR=${0%/*}
 . ${MODDIR}/files/status.conf
 MAGISK_BUSYBOX_PATH='/data/adb/magisk/busybox'
 cus_busybox_file="${MODDIR}/files/bin/busybox_${F_ARCH}"
+MAGISK_TMP="$(magisk --path 2>/dev/null)"
+
+export PATH=${PATH}:${MAGISK_TMP}/.magisk/busybox
 
 until [ "$(getprop sys.boot_completed)" -eq 1 ]; do
   sleep 1
@@ -39,18 +42,15 @@ fi
 [ "$(stat -c %a ${MODDIR}/files/status.conf)" != "644" ] && chmod 0644 ${MODDIR}/files/status.conf
 
 if [ -x "${MAGISK_BUSYBOX_PATH}" ]; then
-  set_crond
-  ${MAGISK_BUSYBOX_PATH} crond -c ${MODDIR}/crond
-  sh ${MODDIR}/Check_FRPC.sh &>/dev/null
-elif [ "$(which crond)" ]; then
-  set_crond
-  crond -c ${MODDIR}/crond
-  sh ${MODDIR}/Check_FRPC.sh &>/dev/null
+  alias crond="${MAGISK_BUSYBOX_PATH} crond"
+elif [ "$(which busybox)" ]; then
+  alias crond="$(which busybox) crond"
 elif [ -x "${cus_busybox_file}" ]; then
-  set_crond
-  ${cus_busybox_file} crond -c ${MODDIR}/crond
-  sh ${MODDIR}/Check_FRPC.sh &>/dev/null
-else
-  sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：未检测到busybox或系统环境中无crond命令！]" "${MODDIR}/module.prop"
-  exit 1
+  alias crond="${cus_busybox_file} crond"
+elif [ "$(which crond)" ]; then
+  alias crond="$(which crond)"
 fi
+
+set_crond
+crond -c ${MODDIR}/crond
+sh ${MODDIR}/Check_FRPC.sh &>/dev/null

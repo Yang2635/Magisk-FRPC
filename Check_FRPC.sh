@@ -5,7 +5,7 @@ MODDIR=${0%/*}
 . ${MODDIR}/functions.sh
 Busybox_file="${MODDIR}/files/bin/busybox_${F_ARCH}"
 
-if [ ! -s "${MODDIR}/module.prop" ]; then
+if [ -z "$(cat ${MODDIR}/module.prop)" ]; then
   cp -af "${MODDIR}/files/module.prop.bak" "${MODDIR}/module.prop"
 fi
 

@@ -47,6 +47,14 @@ The traditional direct zip package construction method is not feasible, so I wro
 
 传统的直接打zip包构建方式已不可行，为此写了一份构建脚本，可参考文章：https://www.isisy.com/1276.html
 
+## Uninstall && Clear
+
+The module settings only generate files in the Magisk module directory and the Android/frpc directory (excluding the frpc log custom path setting). If the module uninstallation is incomplete, please manually clear the Android/frpc directory and related files.
+
+---
+
+模块设置仅在 Magisk 模块目录和 Android/frpc 目录生成文件（不含 frpc 日志自定义路径设置），若模块卸载不完全，则请手动清除 Android/frpc 目录及相关文件。
+
 ## Thanks
 
 - https://github.com/topjohnwu/Magisk

@@ -69,9 +69,27 @@ check_reload() {
   fi
 }
 
+network_iface_check() {
+  local network_iface="$(device_network_iface)"
+  if [ -z "${network_iface}" ]; then
+    if [ -n "${frpc_pid_num}" ]; then
+      {
+        kill -9 "${frpc_pid_num}"
+        rm -f "${MODDIR}/files/frpc_run.pid"
+      }
+      if [ "$?" -eq 0 ]; then
+        sed -i -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=已自动停止检测！" \
+          -e "/^RUNNING_STATUS=/c RUNNING_STATUS=未检测到设备的网络接口，可能设备未开启网络，已停止运行！" \
+          -e "/^RUNNING_NUM=/c RUNNING_NUM=已停止检测！" "${MODDIR}/files/status.conf"
+      fi
+    fi
+  fi
+}
+
 main() {
   local frpc_cpu_usage frpc_vmrss
   local frpc_pid_num="$(frpc_running_check frpc-${F_ARCH})"
+  network_iface_check
   if [ "$(battery_electricity)" -lt 20 ] && [ "$(battery_charge)" -eq 0 ]; then
     if [ -n "${frpc_pid_num}" ]; then
       {
@@ -110,7 +128,7 @@ main() {
   if [ ! -f ${MODDIR}/update ]; then
     sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：${RUNNING_STATUS}；CPU占用（AVG）：${frpc_cpu_usage:-NuLL}；物理内存占用：${frpc_vmrss:-NuLL}]，[配置文件状态：${CHECK_FILE_STATUS}；穿透服务数：${RUNNING_NUM}，自动重载配置文件 ${RELOAD_NUM} 次]" "${MODDIR}/module.prop"
   else
-    sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：${RUNNING_STATUS}，CPU占用（AVG）：${frpc_cpu_usage:-Null}；物理内存占用：${frpc_vmrss:-NuLL}]，[配置文件状态：${CHECK_FILE_STATUS}；穿透服务数：${RUNNING_NUM}，自动重载配置文件 ${RELOAD_NUM} 次]（模块新设定将在设备重启后生效！）" "${MODDIR}/module.prop"
+    sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：${RUNNING_STATUS}，CPU占用（AVG）：${frpc_cpu_usage:-NuLL}；物理内存占用：${frpc_vmrss:-NuLL}]，[配置文件状态：${CHECK_FILE_STATUS}；穿透服务数：${RUNNING_NUM}，自动重载配置文件 ${RELOAD_NUM} 次]（模块新设定将在设备重启后生效！）" "${MODDIR}/module.prop"
   fi
 }
 

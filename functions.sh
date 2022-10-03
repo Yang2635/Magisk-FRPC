@@ -1,12 +1,21 @@
 #!/system/bin/sh
 MODDIR=${0%/*}
 
+# 用户可能的sdcard路径列表，一行一个
+#external_storage_directory_arr=(
+#/sdcard/
+#/mnt/sdcard/
+#/storage/emulated/0/
+#/storage/self/primary/
+#/mnt/user/0/self/primary/
+#)
+
 # toybox_cmd <cmd> [options]
 toybox_cmd() {
-  local toybox_path='/system/bin/toybox'
+  local toybox_bin_path='/system/bin/toybox'
   local toybox_bin="$(which toybox)"
-  if [ -f "${toybox_path}" ]; then
-    ${toybox_path} "$@"
+  if [ -f "${toybox_bin_path}" ]; then
+    ${toybox_bin_path} "$@"
   elif [ -n "${toybox_bin}" ]; then
     ${toybox_bin} "$@"
   else
@@ -38,9 +47,9 @@ frpc_pid_check() {
 
 # 获取frpc 进程
 # Get frpc Process
-process(){
+process() {
   local f_arch=$(get_parameters F_ARCH)
-	toybox_cmd ps -ef | grep "frpc-${f_arch}" | grep -v grep | wc -l
+  toybox_cmd ps -ef | grep "frpc-${f_arch}" | grep -v grep | wc -l
 }
 
 # frpc is running?
@@ -85,7 +94,16 @@ battery_charge() {
 # 获取当前电池电量信息
 # Get current battery level information
 battery_electricity() {
-  dumpsys battery | awk '/level: /{print $2}'
+  dumpsys battery | awk '/level:([[:space:]]+)?/{print $2}'
+}
+
+# 获取设备当前运行的网络接口
+# Get the network interface the device is currently running on
+device_network_iface() {
+  local route=$(sed '1d' /proc/net/route | awk '{printf("%s\n",$1)}' | xargs)
+  if [ -n "${route}" ]; then
+    echo $route
+  fi
 }
 
 # 获取屏幕状态，“0”表示屏幕亮，“1”表示屏幕不亮

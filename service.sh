@@ -1,5 +1,6 @@
 #!/system/bin/sh
-MODDIR=${0%/*}
+#MODDIR=${0%/*}
+MODDIR="$(dirname $(readlink -f "$0"))"
 . ${MODDIR}/files/status.conf
 MAGISK_BUSYBOX_PATH='/data/adb/magisk/busybox'
 cus_busybox_file="${MODDIR}/files/bin/busybox_${F_ARCH}"

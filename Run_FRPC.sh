@@ -1,5 +1,6 @@
 #!/system/bin/sh
-MODDIR=${0%/*}
+#MODDIR=${0%/*}
+MODDIR="$(dirname $(readlink -f "$0"))"
 . ${MODDIR}/files/status.conf
 
 Start_FRPC() {

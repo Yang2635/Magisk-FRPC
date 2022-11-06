@@ -1,5 +1,6 @@
 #!/system/bin/sh
-MODDIR=${0%/*}
+#MODDIR=${0%/*}
+MODDIR="$(dirname $(readlink -f "$0"))"
 
 # 用户可能的sdcard路径列表，一行一个
 #external_storage_directory_arr=(
@@ -40,8 +41,6 @@ frpc_pid_check() {
   if [ -f "${MODDIR}/files/frpc_run.pid" ]; then
     frpc_pid=$(cat ${MODDIR}/files/frpc_run.pid)
     echo "${frpc_pid}"
-  else
-    echo 0
   fi
 }
 
@@ -55,8 +54,8 @@ process() {
 # frpc is running?
 frpc_running_check() {
   local frpc_pid="$(frpc_pid_check)"
-  local pidof_proc_pid="$(toybox_cmd pidof $1)"
-  if [ "${frpc_pid}" -ne 0 ] && [ "$(process)" -eq 1 ]; then
+  local pidof_proc_pid="$(pidof $1)"
+  if [ -n "${frpc_pid}" ] && [ "$(process)" -eq 1 ]; then
     echo "${frpc_pid}"
   elif [ -n "${pidof_proc_pid}" ]; then
     echo "${pidof_proc_pid}"
@@ -67,7 +66,8 @@ frpc_running_check() {
 # Get the physical memory usage used by the frpc program
 frpc_vmrss_check() {
   local frpc_pid="$(frpc_running_check $1)"
-  if [ "${frpc_pid}" -ne 0 ]; then
+  local frpc_pid_num="$(echo ${frpc_pid} | wc -w)"
+  if [ "${frpc_pid}" -ne 0 ] && [ "${frpc_pid_num}" -eq 1 ]; then
     awk '/^VmRSS/{printf("%.2fMB",($2/1024))}' /proc/${frpc_pid}/status
   else
     echo "FRPC未运行！"
@@ -100,9 +100,8 @@ battery_electricity() {
 # 获取设备当前运行的网络接口
 # Get the network interface the device is currently running on
 device_network_iface() {
-  local route=$(sed '1d' /proc/net/route | awk '{printf("%s\n",$1)}' | xargs)
-  if [ -n "${route}" ]; then
-    echo $route
+  if [ -f "/proc/net/route" ]; then
+    sed '1d' /proc/net/route | awk '{printf("%s\n",$1)}' | wc -l
   fi
 }
 

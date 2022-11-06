@@ -1,8 +1,8 @@
 SKIPUNZIP=1
 
 DATADIR='/sdcard/Android'
-VERSION='v3.0.1'
-VERSIONCODE='20220603'
+VERSION='v3.0.2'
+VERSIONCODE='20221106'
 MAGISK_BUSYBOX_PATH='/data/adb/magisk/busybox'
 
 unzip -o "${ZIPFILE}" 'module.prop' -d "${TMPDIR}" >&2

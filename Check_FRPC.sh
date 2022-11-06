@@ -1,6 +1,8 @@
 #!/system/bin/sh
+set -u
 
-MODDIR=${0%/*}
+#MODDIR=${0%/*}
+MODDIR="$(dirname $(readlink -f "$0"))"
 . ${MODDIR}/files/status.conf
 . ${MODDIR}/functions.sh
 Busybox_file="${MODDIR}/files/bin/busybox_${F_ARCH}"
@@ -11,6 +13,14 @@ fi
 
 running_start() {
   local frpc_admin_port running_num
+  network_iface_check
+  if [ "$?" -ne 0 ]; then
+    return
+  fi
+  battery_electricity_check
+  if [ "$?" -ne 0 ]; then
+    return
+  fi
   if [ -f "${DATADIR}/frpc/frpc.ini" ]; then
     sed -i "/^FILE_STATUS=/c FILE_STATUS=$(stat -c %Y ${DATADIR}/frpc/frpc.ini)" "${MODDIR}/files/status.conf"
     sh ${MODDIR}/Run_FRPC.sh verify
@@ -24,6 +34,7 @@ running_start() {
         frpc_admin_port=$(get_parameters admin_port "${DATADIR}/frpc/frpc.ini")
         if [ "${frpc_admin_port}" -ge 1 ] && [ "${frpc_admin_port}" -le 65535 ]; then
           running_num=$(sh ${MODDIR}/Run_FRPC.sh status)
+          sleep 1
           sed -i "/^RUNNING_NUM=/c RUNNING_NUM=${running_num}" "${MODDIR}/files/status.conf"
         elif [ -z "${frpc_admin_port}" ]; then
           sed -i "/^RUNNING_NUM=/c RUNNING_NUM=未定义端口！" "${MODDIR}/files/status.conf"
@@ -45,6 +56,14 @@ running_start() {
 
 check_reload() {
   local frpc_admin_port running_num check_new_file_status
+  network_iface_check
+  if [ "$?" -ne 0 ]; then
+    return
+  fi
+  battery_electricity_check
+  if [ "$?" -ne 0 ]; then
+    return
+  fi
   if [ -f ${DATADIR}/frpc/frpc.ini ]; then
     check_new_file_status="$(stat -c %Y ${DATADIR}/frpc/frpc.ini)"
     if [ "${FILE_STATUS}" != "${check_new_file_status}" ]; then
@@ -52,7 +71,7 @@ check_reload() {
       if [ "$?" -eq 0 ]; then
         sh ${MODDIR}/Run_FRPC.sh reload
         if [ "$?" -eq 0 ]; then
-          sleep 2
+          sleep 5
           running_num=$(sh ${MODDIR}/Run_FRPC.sh status)
           sed -i -e "/^RELOAD_NUM=/c RELOAD_NUM=$(($RELOAD_NUM + 1))" -e "/^FILE_STATUS=/c FILE_STATUS=${check_new_file_status}" \
             -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=配置文件检测正确！" \
@@ -70,18 +89,47 @@ check_reload() {
 }
 
 network_iface_check() {
-  local network_iface="$(device_network_iface)"
-  if [ -z "${network_iface}" ]; then
+  local network_iface_num="$(device_network_iface)"
+  if [ "${network_iface_num}" -eq 0 ]; then
     if [ -n "${frpc_pid_num}" ]; then
       {
         kill -9 "${frpc_pid_num}"
         rm -f "${MODDIR}/files/frpc_run.pid"
       }
-      if [ "$?" -eq 0 ]; then
-        sed -i -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=已自动停止检测！" \
-          -e "/^RUNNING_STATUS=/c RUNNING_STATUS=未检测到设备的网络接口，可能设备未开启网络，已停止运行！" \
-          -e "/^RUNNING_NUM=/c RUNNING_NUM=已停止检测！" "${MODDIR}/files/status.conf"
-      fi
+      sed -i -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=已自动停止检测！" \
+        -e "/^RUNNING_STATUS=/c RUNNING_STATUS=未检测到设备的网络接口，可能设备未开启网络，已停止运行！" \
+        -e "/^RUNNING_NUM=/c RUNNING_NUM=已自动停止检测！" "${MODDIR}/files/status.conf"
+      return 1
+    else
+      sed -i -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=未运行！" \
+        -e "/^RUNNING_STATUS=/c RUNNING_STATUS=未检测到设备的网络接口，可能设备未开启蜂窝数据或WLAN！" \
+        -e "/^RUNNING_NUM=/c RUNNING_NUM=已停止检测！" "${MODDIR}/files/status.conf"
+      return 1
+    fi
+  elif [ -z "${network_iface_num}" ]; then
+    sed -i -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=未运行！" \
+      -e "/^RUNNING_STATUS=/c RUNNING_STATUS=相关文件缺失，可能模块工作于虚拟机或低版本Android设备！" \
+      -e "/^RUNNING_NUM=/c RUNNING_NUM=已停止检测！" "${MODDIR}/files/status.conf"
+    return 1
+  fi
+}
+
+battery_electricity_check() {
+  if [ "$(battery_electricity)" -lt 20 ] && [ "$(battery_charge)" -eq 0 ]; then
+    if [ -n "${frpc_pid_num}" ]; then
+      {
+        kill -9 "${frpc_pid_num}"
+        rm -f "${MODDIR}/files/frpc_run.pid"
+      }
+      sed -i -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=已自动停止检测！" \
+        -e "/^RUNNING_STATUS=/c RUNNING_STATUS=当前电量低于20%且未在充电，自动停止运行！" \
+        -e "/^RUNNING_NUM=/c RUNNING_NUM=已自动停止检测！" "${MODDIR}/files/status.conf"
+      return 2
+    else
+      sed -i -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=未运行！" \
+        -e "/^RUNNING_STATUS=/c RUNNING_STATUS=当前电量低于20%且未在充电，终止运行！" \
+        -e "/^RUNNING_NUM=/c RUNNING_NUM=已停止检测！" "${MODDIR}/files/status.conf"
+      return 2
     fi
   fi
 }
@@ -89,20 +137,8 @@ network_iface_check() {
 main() {
   local frpc_cpu_usage frpc_vmrss
   local frpc_pid_num="$(frpc_running_check frpc-${F_ARCH})"
-  network_iface_check
-  if [ "$(battery_electricity)" -lt 20 ] && [ "$(battery_charge)" -eq 0 ]; then
-    if [ -n "${frpc_pid_num}" ]; then
-      {
-        kill -9 "${frpc_pid_num}"
-        rm -f "${MODDIR}/files/frpc_run.pid"
-      }
-      if [ "$?" -eq 0 ]; then
-        sed -i -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=已自动停止检测！" \
-          -e "/^RUNNING_STATUS=/c RUNNING_STATUS=当前电量低于20%且未在充电，自动停止运行！" \
-          -e "/^RUNNING_NUM=/c RUNNING_NUM=已自动停止检测！" "${MODDIR}/files/status.conf"
-      fi
-    fi
-  elif [ ! -f "${MODDIR}/disable" ]; then
+
+  if [ ! -f "${MODDIR}/disable" ]; then
     if [ -z "${frpc_pid_num}" ]; then
       running_start
     elif [ -n "${frpc_pid_num}" ]; then
@@ -114,11 +150,9 @@ main() {
         kill -9 "${frpc_pid_num}"
         rm -f "${MODDIR}/files/frpc_run.pid"
       }
-      if [ "$?" -eq 0 ]; then
-        sed -i -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=已手动停止检测！" \
-          -e "/^RUNNING_STATUS=/c RUNNING_STATUS=已手动停止运行（重新打开则自动重启FRPC，无需设备重启）" \
-          -e "/^RUNNING_NUM=/c RUNNING_NUM=已手动停止检测！" "${MODDIR}/files/status.conf"
-      fi
+      sed -i -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=已手动停止检测！" \
+        -e "/^RUNNING_STATUS=/c RUNNING_STATUS=已手动停止运行（重新打开则自动重启FRPC，无需设备重启）" \
+        -e "/^RUNNING_NUM=/c RUNNING_NUM=已手动停止检测！" "${MODDIR}/files/status.conf"
     fi
   fi
   frpc_cpu_usage="$(frpc_cpu_usage_check frpc-${F_ARCH})"
@@ -126,9 +160,9 @@ main() {
   sleep 1
   . ${MODDIR}/files/status.conf
   if [ ! -f ${MODDIR}/update ]; then
-    sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：${RUNNING_STATUS}；CPU占用（AVG）：${frpc_cpu_usage:-NuLL}；物理内存占用：${frpc_vmrss:-NuLL}]，[配置文件状态：${CHECK_FILE_STATUS}；穿透服务数：${RUNNING_NUM}，自动重载配置文件 ${RELOAD_NUM} 次]" "${MODDIR}/module.prop"
+    sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：${RUNNING_STATUS}；CPU占用（AVG）：${frpc_cpu_usage:-NuLL}；物理内存占用：${frpc_vmrss:-NuLL}]，[配置文件状态：${CHECK_FILE_STATUS}；穿透服务数（仅参考）：${RUNNING_NUM}，自动重载配置文件 ${RELOAD_NUM} 次]" "${MODDIR}/module.prop"
   else
-    sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：${RUNNING_STATUS}，CPU占用（AVG）：${frpc_cpu_usage:-NuLL}；物理内存占用：${frpc_vmrss:-NuLL}]，[配置文件状态：${CHECK_FILE_STATUS}；穿透服务数：${RUNNING_NUM}，自动重载配置文件 ${RELOAD_NUM} 次]（模块新设定将在设备重启后生效！）" "${MODDIR}/module.prop"
+    sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：${RUNNING_STATUS}，CPU占用（AVG）：${frpc_cpu_usage:-NuLL}；物理内存占用：${frpc_vmrss:-NuLL}]，[配置文件状态：${CHECK_FILE_STATUS}；穿透服务数（仅参考）：${RUNNING_NUM}，自动重载配置文件 ${RELOAD_NUM} 次]（模块新设定将在设备重启后生效！）" "${MODDIR}/module.prop"
   fi
 }
 

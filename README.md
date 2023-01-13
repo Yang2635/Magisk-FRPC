@@ -49,11 +49,13 @@ The traditional direct zip package construction method is not feasible, so I wro
 
 ## Uninstall && Clear
 
-The module settings only generate files in the Magisk module directory and the Android/frpc directory (excluding the frpc log custom path setting). If the module uninstallation is incomplete, please manually clear the Android/frpc directory and related files.
+The module settings are only generated in the Magisk module directory (/data/adb/modules/Magisk-FRPC) and the Android/frpc directory (excluding frpc log custom other path settings). If the module uninstallation is not complete, please manually clear Android/ frpc directory and related files.
 
 ---
 
-模块设置仅在 Magisk 模块目录和 Android/frpc 目录生成文件（不含 frpc 日志自定义路径设置），若模块卸载不完全，则请手动清除 Android/frpc 目录及相关文件。
+模块设置仅在 Magisk 模块目录（/data/adb/modules/Magisk-FRPC）和 Android/frpc 目录生成文件（不含 frpc 日志自定义其它路径设置），若模块卸载不完全，则请手动清除 Android/frpc 目录及相关文件。
+
+> FRPC程序的日志路径设置请勿设置到根目录中去，除非您有需要自定义日志路径，否则请保持默认日志设置或关闭日志生成。
 
 ## Thanks
 

@@ -13,11 +13,10 @@ fi
 
 running_start() {
   local frpc_admin_port running_num
-  network_iface_check
-  if [ "$?" -ne 0 ]; then
-    return
-  fi
-  battery_electricity_check
+  {
+    network_iface_check
+    battery_electricity_check
+  }
   if [ "$?" -ne 0 ]; then
     return
   fi
@@ -56,11 +55,10 @@ running_start() {
 
 check_reload() {
   local frpc_admin_port running_num check_new_file_status
-  network_iface_check
-  if [ "$?" -ne 0 ]; then
-    return
-  fi
-  battery_electricity_check
+  {
+    network_iface_check
+    battery_electricity_check
+  }
   if [ "$?" -ne 0 ]; then
     return
   fi

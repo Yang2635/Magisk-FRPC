@@ -6,11 +6,22 @@ VERSIONCODE='20221106'
 MAGISK_BUSYBOX_PATH='/data/adb/magisk/busybox'
 
 unzip -o "${ZIPFILE}" 'module.prop' -d "${TMPDIR}" >&2
-[ ! -f "${TMPDIR}/module.prop" ] && abort "! 未找到module.prop文件，安装结束!"
+[ ! -f "${TMPDIR}/module.prop" ] && abort "! 未找到 module.prop 文件，安装结束!"
 
 customize_print() {
   ui_print "$@"
   sleep 0.03
+}
+
+is_magisk_app(){
+    if $BOOTMODE; then
+      customize_print "- 从 Magisk 应用程序安装!"
+    else
+      customize_print "*********************************************************"
+      customize_print "! 不支持从 Recovery 中安装!"
+      customize_print "! 请安装 Magisk 应用程序并在 Magisk 应用程序中安装!"
+      abort "*********************************************************"
+    fi
 }
 
 file="META-INF/com/google/android/update-binary"
@@ -22,7 +33,7 @@ if [ -f "${hash_path}" ]; then
   (echo "$(cat "${hash_path}")  ${file_path}" | sha256sum -c -s -) || abort "! 校验：${file} 错误!"
   customize_print "- 校验：${file}" >&1
 else
-  customize_print "- 从Magisk在线更新安裝!"
+  customize_print "- 从 Magisk 在线更新安裝!"
 fi
 
 # extract <zip> <file> <target dir> <junk paths>
@@ -57,6 +68,8 @@ extract() {
 
 author="$(grep_prop author ${TMPDIR}/module.prop)"
 name="$(grep_prop name ${TMPDIR}/module.prop)"
+
+is_magisk_app
 
 mkdir -p "${MODPATH}/files/bin"
 
@@ -115,13 +128,13 @@ check_arch() {
 check_busybox() {
   local cus_busybox_file="${MODPATH}/files/bin/busybox_${F_ARCH}"
   if [ -x "${MAGISK_BUSYBOX_PATH}" ]; then
-    customize_print "- 检测到Magisk的Busybox工具!"
+    customize_print "- 检测到 Magisk 的 Busybox 工具!"
   elif [ "$(which crond)" ]; then
-    customize_print "- 检测到系统环境中存在crond命令!"
+    customize_print "- 检测到系统环境中存在 crond 命令!"
   elif [ -x "${cus_busybox_file}" ]; then
-    customize_print "- 检测到模块提供的Busybox工具!"
+    customize_print "- 检测到模块提供的 Busybox 工具!"
   else
-    abort "! 未检测到相关Busybox工具或所需命令!"
+    abort "! 未检测到相关 Busybox 工具或所需命令!"
   fi
 }
 
@@ -163,7 +176,7 @@ if [ "$(get_choose)" -eq 0 ]; then
   extract "${ZIPFILE}" "files/status.conf" "${MODPATH}/files" true
   extract "${ZIPFILE}" "files/frpc.ini" "${MODPATH}/files" true
   extract "${ZIPFILE}" "files/frpc_full.ini" "${MODPATH}/files" true
-  customize_print "- 文件释放完成!正在设置权限!"
+  customize_print "- 文件释放完成，正在设置权限!"
   set_perm_recursive ${MODPATH} 0 0 0755 0644
   set_perm_recursive ${MODPATH}/files/bin 0 0 0755 0755
   customize_print "- 权限设置完成!"
@@ -204,16 +217,16 @@ if [ "$(get_choose)" -eq 0 ]; then
   else
     if [ ! -d ${DATADIR}/frpc ]; then
       mkdir -p ${DATADIR}/frpc
-      customize_print "- 创建配置文件目录frpc完成!"
+      customize_print "- 创建配置文件目录 frpc 完成!"
       customize_print " "
     elif [ ! -d ${DATADIR}/frpc/logs ]; then
       mkdir ${DATADIR}/frpc/logs
-      customize_print "- 创建日志目录frpc/logs完成!"
+      customize_print "- 创建日志目录 frpc/logs 完成!"
       customize_print " "
     fi
     cp -af ${MODPATH}/files/frpc*.ini ${MODPATH}/update_log.md ${DATADIR}/frpc/
     customize_print "- 已创建配置文件!"
-    customize_print "- 请前往 ${DATADIR}/frpc目录查看frpc.ini文件内使用说明并配置文件!"
+    customize_print "- 请前往 ${DATADIR}/frpc 目录查看 frpc.ini 文件内使用说明并配置文件!"
     customize_print "- 然后进行设备重启即可!"
   fi
 else

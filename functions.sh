@@ -20,49 +20,48 @@ get_parameters() {
   sed -n "$REGEX" ${FILES} | head -n 1
 }
 
-# 检测获取frpc pid信息
-# Detect and obtain frpc pid information
-frpc_pid_check() {
-  local _frpc_pid
-  if [ -f "${MODDIR}/files/frpc_run.pid" ]; then
-    _frpc_pid=$(cat ${MODDIR}/files/frpc_run.pid)
-    echo "${_frpc_pid}"
-  fi
-}
 
 # 获取 frpc 进程数
 # Get frpc Process number
 process() {
   local _frpc_bin="$1"
   local _get_process_list
-  _get_process_list=$(ps -ef | grep "${_frpc_bin}" | grep -v grep | awk '{print $2}' | xargs)
+  _get_process_list=$(ps -ef | grep "${_frpc_bin}" | grep -v grep | awk '{print $1}' | xargs)
   if [ -n "${_get_process_list}" ]; then
     echo "${_get_process_list}"
   fi
 }
 
-# frpc is running?
+# get frpc running pid
 get_frpc_running_pid() {
   local _frpc_bin="$1"
-  local _frpc_pid="$(frpc_pid_check)"
-
-  local _get_exec_comm
-  if [ -n "${_frpc_pid}" ] && [ -d "/proc/${_frpc_pid}" ]; then
-    _get_exec_comm="$(cat /proc/${_frpc_pid}/comm)"
-  fi
-
-  if [ -n "${_get_exec_comm}" ] && [ "${_get_exec_comm}" == "${_frpc_bin}" ]; then
-    echo "${_frpc_pid}"
-    return
-  fi
-
   local _pidof_get_pid="$(pidof "${_frpc_bin}")"
+  local _pidof_get_pid_number="$(echo "${_pidof_get_pid}" | wc -w)"
+  local _get_process_pid="$(process ${_frpc_bin})"
+  local _get_process_pid_number="$(echo "${_get_process_pid}" | wc -w)"
+  local _frpc_pid=''
+  local _get_exec_comm=''
+
+  if [ -f "${MODDIR}/files/frpc_run.pid" ]; then
+    _frpc_pid=$(cat ${MODDIR}/files/frpc_run.pid)
+
+    if [ -n "${_frpc_pid}" ] && [ -d "/proc/${_frpc_pid}" ]; then
+      _get_exec_comm="$(cat /proc/${_frpc_pid}/comm)"
+
+      if [ "${_get_exec_comm}" == "${_frpc_bin}" ]; then
+        if [ "${_pidof_get_pid_number}" -eq 1 ]; then
+          echo "${_frpc_pid}"
+          return
+        fi
+      fi
+    fi
+  fi
+
   if [ -n "${_pidof_get_pid}" ]; then
     echo "${_pidof_get_pid}"
     return
   fi
 
-  local _get_process_pid="$(process ${_frpc_bin})"
   if [ -n "${_get_process_pid}" ]; then
     echo "${_get_process_pid}"
     return
@@ -75,8 +74,8 @@ get_frpc_running_pid() {
 # Get the physical memory usage used by the frpc program
 frpc_vmrss_check() {
   local _frpc_bin="$1"
-  local _frpc_pid="$(frpc_running_check "${_frpc_bin}")"
-  local _frpc_pid_num="$(echo ${_frpc_pid} | wc -w)"
+  local _frpc_pid="$(get_frpc_running_pid "${_frpc_bin}")"
+  local _frpc_pid_num="$(echo "${_frpc_pid}" | wc -w)"
   if [ -n "${_frpc_pid}" ] && [ "${_frpc_pid_num}" -gt 1 ]; then
     echo "存在多个FRPC程序！"
     return 4

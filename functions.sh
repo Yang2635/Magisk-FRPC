@@ -11,20 +11,6 @@ MODDIR="$(dirname $(readlink -f "$0"))"
 #/mnt/user/0/self/primary/
 #)
 
-# toybox_cmd <cmd> [options]
-toybox_cmd() {
-  local toybox_bin_path='/system/bin/toybox'
-  local toybox_bin="$(which toybox)"
-  if [ -f "${toybox_bin_path}" ]; then
-    ${toybox_bin_path} "$@"
-  elif [ -n "${toybox_bin}" ]; then
-    ${toybox_bin} "$@"
-  else
-    sed -i "/^description=/c description=使用Magisk挂载运行通用FRPC程序。[状态：未检测到toybox工具！]" "${MODDIR}/module.prop"
-    exit 1
-  fi
-}
-
 # get_parameters <key> <file>
 get_parameters() {
   local REGEX="s/^$1[[:space:]]*=[[:space:]]*//p"
@@ -37,51 +23,69 @@ get_parameters() {
 # 检测获取frpc pid信息
 # Detect and obtain frpc pid information
 frpc_pid_check() {
-  local frpc_pid
+  local _frpc_pid
   if [ -f "${MODDIR}/files/frpc_run.pid" ]; then
-    frpc_pid=$(cat ${MODDIR}/files/frpc_run.pid)
-    echo "${frpc_pid}"
+    _frpc_pid=$(cat ${MODDIR}/files/frpc_run.pid)
+    echo "${_frpc_pid}"
   fi
 }
 
-# 获取frpc 进程
-# Get frpc Process
+# 获取 frpc 进程数
+# Get frpc Process number
 process() {
-  local f_arch=$(get_parameters F_ARCH)
-  toybox_cmd ps -ef | grep "frpc-${f_arch}" | grep -v grep | wc -l
+  local _frpc_bin="$1"
+  local _get_process_list
+  _get_process_list=$(ps -ef | grep "${_frpc_bin}" | grep -v grep | awk '{print $2}' | xargs)
+  if [ -n "${_get_process_list}" ]; then
+    echo "${_get_process_list}"
+  fi
 }
 
 # frpc is running?
-frpc_running_check() {
-  local frpc_pid="$(frpc_pid_check)"
-  local pidof_proc_pid="$(pidof $1)"
-  if [ -n "${frpc_pid}" ] && [ "$(process)" -eq 1 ]; then
-    echo "${frpc_pid}"
-  elif [ -n "${pidof_proc_pid}" ]; then
-    echo "${pidof_proc_pid}"
+get_frpc_running_pid() {
+  local _frpc_bin="$1"
+  local _frpc_pid="$(frpc_pid_check)"
+
+  local _get_exec_comm
+  if [ -n "${_frpc_pid}" ] && [ -d "/proc/${_frpc_pid}" ]; then
+    _get_exec_comm="$(cat /proc/${_frpc_pid}/comm)"
+  fi
+
+  if [ -n "${_get_exec_comm}" ] && [ "${_get_exec_comm}" == "${_frpc_bin}" ]; then
+    echo "${_frpc_pid}"
+    return
+  fi
+
+  local _pidof_get_pid="$(pidof "${_frpc_bin}")"
+  if [ -n "${_pidof_get_pid}" ]; then
+    echo "${_pidof_get_pid}"
+    return
+  fi
+
+  local _get_process_pid="$(process ${_frpc_bin})"
+  if [ -n "${_get_process_pid}" ]; then
+    echo "${_get_process_pid}"
+    return
+  else
+    return 3
   fi
 }
 
 # 获取frpc程序所用物理内存使用率
 # Get the physical memory usage used by the frpc program
 frpc_vmrss_check() {
-  local frpc_pid="$(frpc_running_check $1)"
-  local frpc_pid_num="$(echo ${frpc_pid} | wc -w)"
-  if [ "${frpc_pid}" -ne 0 ] && [ "${frpc_pid_num}" -eq 1 ]; then
-    awk '/^VmRSS/{printf("%.2fMB",($2/1024))}' /proc/${frpc_pid}/status
+  local _frpc_bin="$1"
+  local _frpc_pid="$(frpc_running_check "${_frpc_bin}")"
+  local _frpc_pid_num="$(echo ${_frpc_pid} | wc -w)"
+  if [ -n "${_frpc_pid}" ] && [ "${_frpc_pid_num}" -gt 1 ]; then
+    echo "存在多个FRPC程序！"
+    return 4
+  fi
+  if [ -n "${_frpc_pid}" ] && [ "${_frpc_pid_num}" -eq 1 ]; then
+    awk '/^VmRSS/{printf("%.2fMB",($2/1024))}' /proc/${_frpc_pid}/status
   else
     echo "FRPC未运行！"
-  fi
-}
-
-# 获取frpc程序使用的cpu使用率
-# Get the cpu usage used by the frpc program
-frpc_cpu_usage_check() {
-  local frpc_pid="$(frpc_running_check $1)"
-  if [ -n "${frpc_pid}" ]; then
-    toybox_cmd ps --pid=${frpc_pid} -o pcpu | grep -v "CPU" | awk '{printf("%s%%",$1)}'
-  else
-    echo "无进程！"
+    return 5
   fi
 }
 
@@ -100,6 +104,12 @@ battery_electricity() {
 # 获取设备当前运行的网络接口
 # Get the network interface the device is currently running on
 device_network_iface() {
+  if [ -f "/proc/net/route" ]; then
+    sed '1d' /proc/net/route | awk '{printf("%s\n",$1)}' | xargs
+  fi
+}
+
+device_network_iface_number(){
   if [ -f "/proc/net/route" ]; then
     sed '1d' /proc/net/route | awk '{printf("%s\n",$1)}' | wc -l
   fi

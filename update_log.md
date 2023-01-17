@@ -2,12 +2,13 @@
 
 让你的手机等终端设备运行FRPC程序。程序依赖Magisk，请自行安装Magisk模块后使用。
 
-## v3.0.2
+## v3.1.0
 
-- 更新：FRPC程序为**v0.45.0**，点击查看[FRPC更新日志](https://github.com/fatedier/frp/releases/tag/v0.45.0)
-- 增加：检测网络接口，无网络接口时停止运行FRPC。防止未开网络致使FRPC运行时生成大量日志（开启并记录日志情况下）
-- 优化：相关函数执行
-- 增加：模块安装环境判断，防止用户跑到 Recovery 中安装（某安里还是有这样的用户，无奈）
+- 更新：FRPC程序为**v0.46.1**，点击查看[FRPC更新日志](https://github.com/fatedier/frp/releases/tag/v0.46.1)
+- 增加：网络接口检测判断
+- 优化：相关函数
+- 移除：CPU状态检测（不同Android版本或不同机型toybox执行所需命令功能不一，易造成误判）
+- 增加：模块安装环境判断，防止用户前往 Recovery 中安装
 
 ## v3.0.1
 

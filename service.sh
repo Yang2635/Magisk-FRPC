@@ -2,11 +2,11 @@
 #MODDIR=${0%/*}
 MODDIR="$(dirname $(readlink -f "$0"))"
 . ${MODDIR}/files/status.conf
+F_ARCH="${F_ARCH:=arm64}"
+DATADIR="${DATADIR:=/sdcard/Android}"
 MAGISK_BUSYBOX_PATH='/data/adb/magisk/busybox'
 cus_busybox_file="${MODDIR}/files/bin/busybox_${F_ARCH}"
 MAGISK_TMP="$(magisk --path 2>/dev/null)"
-
-export PATH=${PATH}:${MAGISK_TMP}/.magisk/busybox
 
 until [ "$(getprop sys.boot_completed)" -eq 1 ]; do
   sleep 1
@@ -48,8 +48,8 @@ elif [ "$(which busybox)" ]; then
   alias crond="$(which busybox) crond"
 elif [ -x "${cus_busybox_file}" ]; then
   alias crond="${cus_busybox_file} crond"
-elif [ "$(which crond)" ]; then
-  alias crond="$(which crond)"
+elif [ "$(command -v crond)" ]; then
+  alias crond="$(command -v crond)"
 fi
 
 set_crond

@@ -5,16 +5,17 @@ set -u
 MODDIR="$(dirname $(readlink -f "$0"))"
 . ${MODDIR}/files/status.conf
 . ${MODDIR}/functions.sh
+F_ARCH="${F_ARCH:=arm64}"
+DATADIR="${DATADIR:=/sdcard/Android}"
 Busybox_file="${MODDIR}/files/bin/busybox_${F_ARCH}"
 frpc_bin="frpc-${F_ARCH}"
-DATADIR="${DATADIR}"
 
 if [ -z "$(cat ${MODDIR}/module.prop)" ]; then
   cp -af "${MODDIR}/files/module.prop.bak" "${MODDIR}/module.prop"
 fi
 
 running_start() {
-  local _frpc_admin_port _running_num
+  local _frpc_admin_port _running_num _check_file_status
   battery_electricity_check
   if [ "$?" -ne 0 ]; then
     return
@@ -25,8 +26,8 @@ running_start() {
       -e "/^RUNNING_STATUS=/c RUNNING_STATUS=FRPC未运行！" "${MODDIR}/files/status.conf"
       return 8
   fi
-
-  sed -i "/^FILE_STATUS=/c FILE_STATUS=$(stat -c %Y ${DATADIR}/frpc/frpc.ini)" "${MODDIR}/files/status.conf"
+  _file_status="$(stat -c %Y ${DATADIR}/frpc/frpc.ini)"
+  sed -i "/^FILE_STATUS=/c FILE_STATUS=${_check_file_status}" "${MODDIR}/files/status.conf"
 
   sh ${MODDIR}/Run_FRPC.sh verify
   if [ "$?" -eq 0 ]; then
@@ -42,12 +43,12 @@ running_start() {
   if [ -n "$(get_frpc_running_pid ${frpc_bin})" ]; then
     sed -i -e "/^RUNNING_STATUS=/c RUNNING_STATUS=FRPC正在运行中！" \
       -e "/^RELOAD_NUM=/c RELOAD_NUM=0" "${MODDIR}/files/status.conf"
-    _frpc_admin_port=$(get_parameters admin_port "${DATADIR}/frpc/frpc.ini")
   else
     sed -i "/^RUNNING_STATUS=/c RUNNING_STATUS=FRPC启动失败！" "${MODDIR}/files/status.conf"
     return 10
   fi
 
+  _frpc_admin_port=$(get_parameters admin_port "${DATADIR}/frpc/frpc.ini")
   if [ "${_frpc_admin_port}" -ge 1 ] && [ "${_frpc_admin_port}" -le 65535 ]; then
     _running_num=$(sh ${MODDIR}/Run_FRPC.sh status)
     sleep 1
@@ -62,7 +63,7 @@ running_start() {
 }
 
 check_reload() {
-  local _running_num _check_new_file_status
+  local _running_num _check_new_file_status _reload_num
   battery_electricity_check
   if [ "$?" -ne 0 ]; then
     return
@@ -89,7 +90,8 @@ check_reload() {
 
     sleep 5
     _running_num=$(sh ${MODDIR}/Run_FRPC.sh status)
-    sed -i -e "/^RELOAD_NUM=/c RELOAD_NUM=$(($RELOAD_NUM + 1))" -e "/^FILE_STATUS=/c FILE_STATUS=${_check_new_file_status}" \
+    _reload_num="$(($RELOAD_NUM + 1))"
+    sed -i -e "/^RELOAD_NUM=/c RELOAD_NUM=${_reload_num}" -e "/^FILE_STATUS=/c FILE_STATUS=${_check_new_file_status}" \
       -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=配置文件检测正确！" \
       -e "/^RUNNING_NUM=/c RUNNING_NUM=${_running_num}" "${MODDIR}/files/status.conf"
   fi

@@ -28,6 +28,7 @@ After the module is installed, please browse the frpc.ini file under the Android
 - Check the integrity of the file to prevent the module from being damaged. (thanks to the inspiration provided by the Riru module).
 - It can be turned on or off in the Magisk module to control the start and end of the FRPC program.
 - The power of the device is less than 20% and the FRPC program is automatically terminated when it is not being charged. Please keep the device full of power!
+- Creating a screen file in the module directory means that the screen is detected, otherwise it will not be detected.
 
 ---
 
@@ -38,6 +39,7 @@ After the module is installed, please browse the frpc.ini file under the Android
 - 检验文件完整性，防止模块被破坏。（感谢Riru模块提供的灵感）。
 - 可在Magisk模块中开启或关闭来控制FRPC程序启动与结束。
 - 设备电量低于20%且未在充电自动终止FRPC程序，请保持设备电量充足！
+- 在模块目录创建 screen 文件则表示息屏检测，反之不检测
 
 ## How to build？
 

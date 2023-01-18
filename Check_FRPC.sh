@@ -26,7 +26,7 @@ running_start() {
       -e "/^RUNNING_STATUS=/c RUNNING_STATUS=FRPC未运行！" "${MODDIR}/files/status.conf"
       return 8
   fi
-  _file_status="$(stat -c %Y ${DATADIR}/frpc/frpc.ini)"
+  _check_file_status="$(stat -c %Y ${DATADIR}/frpc/frpc.ini)"
   sed -i "/^FILE_STATUS=/c FILE_STATUS=${_check_file_status}" "${MODDIR}/files/status.conf"
 
   sh ${MODDIR}/Run_FRPC.sh verify

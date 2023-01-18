@@ -1,8 +1,8 @@
 SKIPUNZIP=1
 
 DATADIR='/sdcard/Android'
-VERSION='v3.0.2'
-VERSIONCODE='20221106'
+VERSION='v3.1.0'
+VERSIONCODE='20230118'
 MAGISK_BUSYBOX_PATH='/data/adb/magisk/busybox'
 
 unzip -o "${ZIPFILE}" 'module.prop' -d "${TMPDIR}" >&2
@@ -14,7 +14,7 @@ customize_print() {
 }
 
 is_magisk_app(){
-    if $BOOTMODE; then
+    if [ $BOOTMODE ]; then
       customize_print "- 从 Magisk 应用程序安装!"
     else
       customize_print "*********************************************************"
@@ -147,7 +147,7 @@ customize_print "- 安卓版本: $(getprop ro.build.version.release)"
 [ "$(getprop ro.miui.ui.version.name)" != "" ] && customize_print "- MIUI版本: MIUI $(getprop ro.miui.ui.version.name) - $(getprop ro.build.version.incremental)"
 customize_print "- 内核版本: $(uname -osr)"
 customize_print "- 运存大小: $(free -m | grep -E "^Mem|^内存" | awk '{printf("总量：%s MB，已用：%s MB，剩余：%s MB，使用率：%.2f%%",$2,$3,($2-$3),($3/$2*100))}')"
-customize_print "- Swap大小: $(free -m | grep -E "^Swap|^交换" | awk '{printf("总量：%s MB，已用：%s MB，剩余：%s MB，使用率：%.2f%%",$2,$3,$4,($3/$2*100))}')"
+[ "$(free -m | grep -E "^Swap|^交换")" != "" ] && customize_print "- Swap大小: $(free -m | grep -E "^Swap|^交换" | awk '{printf("总量：%s MB，已用：%s MB，剩余：%s MB，使用率：%.2f%%",$2,$3,$4,($3/$2*100))}')"
 customize_print " "
 customize_print "(@) 模块信息："
 customize_print "- 名称: ${name}"

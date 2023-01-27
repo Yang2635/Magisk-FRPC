@@ -1,9 +1,8 @@
 SKIPUNZIP=1
 
 DATADIR='/sdcard/Android'
-VERSION='v3.1.0'
-VERSIONCODE='20230118'
-MAGISK_BUSYBOX_PATH='/data/adb/magisk/busybox'
+VERSION='v3.1.1'
+VERSIONCODE='20230127'
 
 unzip -o "${ZIPFILE}" 'module.prop' -d "${TMPDIR}" >&2
 [ ! -f "${TMPDIR}/module.prop" ] && abort "! 未找到 module.prop 文件，安装结束!"
@@ -71,7 +70,7 @@ name="$(grep_prop name ${TMPDIR}/module.prop)"
 
 is_magisk_app
 
-mkdir -p "${MODPATH}/files/bin"
+mkdir -p "${MODPATH}/files/bin/busybox"
 
 # Detect volume key selection
 get_choose() {
@@ -96,8 +95,8 @@ get_choose() {
 
 # Check whether the directory is readable and writable
 sdcard_RW() {
-  local test_file="${DATADIR}/.FRPC_MODULE_TEST_FILE"
-  { touch $test_file; rm $test_file;}
+  local _test_file="${DATADIR}/.FRPC_MODULE_TEST_FILE"
+  { touch $_test_file; rm $_test_file;}
   echo $?
 }
 
@@ -122,20 +121,6 @@ check_arch() {
     abort "! 安装结束!"
     ;;
   esac
-}
-
-# Detect whether the system environment contains the Busybox tool
-check_busybox() {
-  local cus_busybox_file="${MODPATH}/files/bin/busybox_${F_ARCH}"
-  if [ -x "${MAGISK_BUSYBOX_PATH}" ]; then
-    customize_print "- 检测到 Magisk 的 Busybox 工具!"
-  elif [ "$(which crond)" ]; then
-    customize_print "- 检测到系统环境中存在 crond 命令!"
-  elif [ -x "${cus_busybox_file}" ]; then
-    customize_print "- 检测到模块提供的 Busybox 工具!"
-  else
-    abort "! 未检测到相关 Busybox 工具或所需命令!"
-  fi
 }
 
 customize_print " "
@@ -165,13 +150,13 @@ if [ "$(get_choose)" -eq 0 ]; then
   customize_print " "
   customize_print "- 正在校验、释放所需文件!"
   extract "${ZIPFILE}" "files/bin/frpc-${F_ARCH}" "${MODPATH}/files/bin" true
-  extract "${ZIPFILE}" "files/bin/busybox_${F_ARCH}" "${MODPATH}/files/bin" true
+  extract "${ZIPFILE}" "files/bin/busybox/busybox_${F_ARCH}" "${MODPATH}/files/bin/busybox" true
   extract "${ZIPFILE}" "service.sh" "${MODPATH}"
   extract "${ZIPFILE}" "module.prop" "${MODPATH}"
   extract "${ZIPFILE}" "functions.sh" "${MODPATH}"
   extract "${ZIPFILE}" "uninstall.sh" "${MODPATH}"
-  extract "${ZIPFILE}" "Run_FRPC.sh" "${MODPATH}"
-  extract "${ZIPFILE}" "Check_FRPC.sh" "${MODPATH}"
+  extract "${ZIPFILE}" "run_frpc.sh" "${MODPATH}"
+  extract "${ZIPFILE}" "check_frpc.sh" "${MODPATH}"
   extract "${ZIPFILE}" "update_log.md" "${MODPATH}"
   extract "${ZIPFILE}" "files/status.conf" "${MODPATH}/files" true
   extract "${ZIPFILE}" "files/frpc.ini" "${MODPATH}/files" true
@@ -179,9 +164,27 @@ if [ "$(get_choose)" -eq 0 ]; then
   customize_print "- 文件释放完成，正在设置权限!"
   set_perm_recursive ${MODPATH} 0 0 0755 0644
   set_perm_recursive ${MODPATH}/files/bin 0 0 0755 0755
+  set_perm_recursive ${MODPATH}/files/bin/busybox 0 0 0755 0755
   customize_print "- 权限设置完成!"
   customize_print " "
-  check_busybox
+  customize_print "- 开始设置自定义Busybox指令环境!"
+  customize_print " "
+  if [ -x ${MODPATH}/files/bin/busybox/busybox_${F_ARCH} ]; then
+    ${MODPATH}/files/bin/busybox/busybox_${F_ARCH} --install -s ${MODPATH}/files/bin/busybox
+    customize_print "- 自定义Busybox指令环境设置成功!"
+  else
+    customize_print "- Busybox指令无可执行权限，将尝试查找其它可能的Busybox指令!"
+    if [ -x /data/adb/magisk/busybox ]; then
+      /data/adb/magisk/busybox --install -s ${MODPATH}/files/bin/busybox
+      customize_print "- 找到Magisk Busybox指令，成功设置指令环境!"
+    elif [ -n "$(command -v busybox)" ]; then
+      findbb=$(command -v busybox)
+      ${findbb} --install -s ${MODPATH}/files/bin/busybox
+      customize_print "- 在PATH中找到Busybox指令，成功设置指令环境!"
+    else
+      customize_print "- 注意！！！未设置BusyBox指令环境，可能部分命令执行结果存在偏差！"
+    fi
+  fi
   sed -i -e "/^F_ARCH=/c F_ARCH=${F_ARCH}" -e "/^DATADIR=/c DATADIR=\'${DATADIR}\'" "${MODPATH}/files/status.conf"
   FRP_VERSION=$(${MODPATH}/files/bin/frpc-${F_ARCH} -v)
   sed -i -e "/^version=/c version=${VERSION}-\(frpc\: v${FRP_VERSION}\)" -e "/^versionCode=/c versionCode=${VERSIONCODE}" "${MODPATH}/module.prop"

@@ -3,38 +3,36 @@
 MODDIR="$(dirname $(readlink -f "$0"))"
 . ${MODDIR}/files/status.conf
 
-Start_FRPC() {
+start_frpc() {
   nohup ${MODDIR}/files/bin/frpc-${F_ARCH} -c ${DATADIR}/frpc/frpc.ini >/dev/null 2>&1 &
   echo "$!" >${MODDIR}/files/frpc_run.pid
 }
 
-Verify_FRPC() {
+verify_frpc() {
   ${MODDIR}/files/bin/frpc-${F_ARCH} verify -c ${DATADIR}/frpc/frpc.ini
 }
 
-Reload_FRPC() {
+reload_frpc() {
   ${MODDIR}/files/bin/frpc-${F_ARCH} reload -c ${DATADIR}/frpc/frpc.ini
 }
 
-Work_Status() {
+work_status() {
   ${MODDIR}/files/bin/frpc-${F_ARCH} status -c ${DATADIR}/frpc/frpc.ini | grep "running" | wc -l
 }
 
 if [ $# -ne 0 ]; then
   case "$1" in
   start)
-    Start_FRPC
+    start_frpc
     ;;
   reload)
-    Reload_FRPC
+    reload_frpc
     ;;
   verify)
-    Verify_FRPC
+    verify_frpc
     ;;
   status)
-    Work_Status
+    work_status
     ;;
   esac
-else
-  exit 1
 fi

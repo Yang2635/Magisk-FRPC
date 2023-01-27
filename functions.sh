@@ -54,8 +54,8 @@ get_frpc_running_pid() {
     fi
   fi
 
-  if [ -n "${_pidof_get_pid}" ]; then
-    echo "${_pidof_get_pid}"
+  if [ -n "${_get_frpc_pid}" ]; then
+    echo "${_get_frpc_pid}"
     return
   fi
 

@@ -129,10 +129,10 @@ customize_print "- 品牌: $(getprop ro.product.brand)"
 customize_print "- 代号: $(getprop ro.product.device)"
 customize_print "- 模型: $(getprop ro.product.model)"
 customize_print "- 安卓版本: $(getprop ro.build.version.release)"
-[ "$(getprop ro.miui.ui.version.name)" != "" ] && customize_print "- MIUI版本: MIUI $(getprop ro.miui.ui.version.name) - $(getprop ro.build.version.incremental)"
+[ -n "$(getprop ro.miui.ui.version.name)" ] && customize_print "- MIUI版本: MIUI $(getprop ro.miui.ui.version.name) - $(getprop ro.build.version.incremental)"
 customize_print "- 内核版本: $(uname -osr)"
 customize_print "- 运存大小: $(free -m | grep -E "^Mem|^内存" | awk '{printf("总量：%s MB，已用：%s MB，剩余：%s MB，使用率：%.2f%%",$2,$3,($2-$3),($3/$2*100))}')"
-[ "$(free -m | grep -E "^Swap|^交换")" != "" ] && customize_print "- Swap大小: $(free -m | grep -E "^Swap|^交换" | awk '{printf("总量：%s MB，已用：%s MB，剩余：%s MB，使用率：%.2f%%",$2,$3,$4,($3/$2*100))}')"
+[ -n "$(free -m | grep -E "^Swap|^交换")" ] && customize_print "- Swap大小: $(free -m | grep -E "^Swap|^交换" | awk '{printf("总量：%s MB，已用：%s MB，剩余：%s MB，使用率：%.2f%%",$2,$3,$4,($3/$2*100))}')"
 customize_print " "
 customize_print "(@) 模块信息："
 customize_print "- 名称: ${name}"
@@ -161,6 +161,7 @@ if [ "$(get_choose)" -eq 0 ]; then
   extract "${ZIPFILE}" "files/status.conf" "${MODPATH}/files" true
   extract "${ZIPFILE}" "files/frpc.ini" "${MODPATH}/files" true
   extract "${ZIPFILE}" "files/frpc_full.ini" "${MODPATH}/files" true
+  cp ${MODPATH}/module.prop ${MODPATH}/files/module.prop.bak
   customize_print "- 文件释放完成，正在设置权限!"
   set_perm_recursive ${MODPATH} 0 0 0755 0644
   set_perm_recursive ${MODPATH}/files/bin 0 0 0755 0755

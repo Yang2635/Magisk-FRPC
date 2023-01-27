@@ -39,7 +39,7 @@ running_start() {
   fi
 
   sh ${MODDIR}/run_frpc.sh start
-  sleep 5
+  sleep 3
   if [ -n "$(get_frpc_running_pid ${frpc_bin})" ]; then
     sed -i -e "/^RUNNING_STATUS=/c RUNNING_STATUS=FRPC正在运行中！" \
       -e "/^RELOAD_NUM=/c RELOAD_NUM=0" "${MODDIR}/files/status.conf"
@@ -88,7 +88,7 @@ check_reload() {
       return 15
     fi
 
-    sleep 5
+    sleep 3
     _running_num=$(sh ${MODDIR}/run_frpc.sh status)
     _reload_num="$(($RELOAD_NUM + 1))"
     sed -i -e "/^RELOAD_NUM=/c RELOAD_NUM=${_reload_num}" -e "/^FILE_STATUS=/c FILE_STATUS=${_check_new_file_status}" \

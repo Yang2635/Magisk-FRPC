@@ -4,9 +4,7 @@ MODDIR="$(dirname $(readlink -f "$0"))"
 . ${MODDIR}/files/status.conf
 F_ARCH="${F_ARCH:=arm64}"
 DATADIR="${DATADIR:=/sdcard/Android}"
-MAGISK_BUSYBOX_PATH='/data/adb/magisk/busybox'
-cus_busybox_file="${MODDIR}/files/bin/busybox_${F_ARCH}"
-MAGISK_TMP="$(magisk --path 2>/dev/null)"
+export PATH=${MODDIR}/files/bin/busybox:$PATH
 
 until [ "$(getprop sys.boot_completed)" -eq 1 ]; do
   sleep 1
@@ -42,16 +40,6 @@ if [ -f ${MODDIR}/files/frpc_run.pid ]; then
 fi
 [ "$(stat -c %a ${MODDIR}/files/status.conf)" != "644" ] && chmod 0644 ${MODDIR}/files/status.conf
 
-if [ -x "${MAGISK_BUSYBOX_PATH}" ]; then
-  alias crond="${MAGISK_BUSYBOX_PATH} crond"
-elif [ "$(which busybox)" ]; then
-  alias crond="$(which busybox) crond"
-elif [ -x "${cus_busybox_file}" ]; then
-  alias crond="${cus_busybox_file} crond"
-elif [ "$(command -v crond)" ]; then
-  alias crond="$(command -v crond)"
-fi
-
 set_crond
 crond -c ${MODDIR}/crond
-sh ${MODDIR}/Check_FRPC.sh &>/dev/null
+sh ${MODDIR}/check_frpc.sh &>/dev/null

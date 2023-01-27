@@ -25,34 +25,31 @@ get_parameters() {
 # Get frpc Process number
 process() {
   local _frpc_bin="$1"
-  local _get_process_list
-  _get_process_list=$(ps -ef | grep "${_frpc_bin}" | grep -v grep | awk '{print $1}' | xargs)
-  if [ -n "${_get_process_list}" ]; then
-    echo "${_get_process_list}"
+  local _get_process_pid
+  _get_process_pid=$(ps | grep "${_frpc_bin}" | grep -v grep | awk '{print $1}' | xargs)
+  if [ -n "${_get_process_pid}" ]; then
+    echo "${_get_process_pid}"
   fi
 }
 
 # get frpc running pid
 get_frpc_running_pid() {
   local _frpc_bin="$1"
-  local _pidof_get_pid="$(pidof "${_frpc_bin}")"
-  local _pidof_get_pid_number="$(echo "${_pidof_get_pid}" | wc -w)"
-  local _get_process_pid="$(process ${_frpc_bin})"
-  local _get_process_pid_number="$(echo "${_get_process_pid}" | wc -w)"
   local _frpc_pid=''
   local _get_exec_comm=''
 
+  local _get_frpc_pid="$(pidof "${_frpc_bin}")"
+  if [ -n "${_get_frpc_pid}" ]; then
+    local _get_frpc_pid_number="$(echo "${_get_frpc_pid}" | wc -w)"
+  fi
+
   if [ -f "${MODDIR}/files/frpc_run.pid" ]; then
     _frpc_pid=$(cat ${MODDIR}/files/frpc_run.pid)
-
     if [ -n "${_frpc_pid}" ] && [ -d "/proc/${_frpc_pid}" ]; then
       _get_exec_comm="$(cat /proc/${_frpc_pid}/comm)"
-
-      if [ "${_get_exec_comm}" == "${_frpc_bin}" ]; then
-        if [ "${_pidof_get_pid_number}" -eq 1 ]; then
-          echo "${_frpc_pid}"
-          return
-        fi
+      if [ "${_get_exec_comm}" == "${_frpc_bin}" ] && [ "${_get_frpc_pid_number}" -eq 1 ]; then
+        echo "${_frpc_pid}"
+        return
       fi
     fi
   fi
@@ -62,11 +59,10 @@ get_frpc_running_pid() {
     return
   fi
 
-  if [ -n "${_get_process_pid}" ]; then
-    echo "${_get_process_pid}"
+  local _process_get_frpc_pid=$(process ${_frpc_bin})
+  if [ -n "${_process_get_frpc_pid}" ]; then
+    echo "${_process_get_frpc_pid}"
     return
-  else
-    return 3
   fi
 }
 
@@ -91,7 +87,7 @@ frpc_vmrss_check() {
 # 获取电池是否正在充电的信息
 # Get information about whether the battery is charging
 battery_charge() {
-  dumpsys battery | grep "powered" | grep 'true' | wc -l
+  dumpsys deviceidle get charging | sed -e 's/false/1/' -e 's/true/0/'
 }
 
 # 获取当前电池电量信息
@@ -108,14 +104,12 @@ device_network_iface() {
   fi
 }
 
-device_network_iface_number(){
-  if [ -f "/proc/net/route" ]; then
-    sed '1d' /proc/net/route | awk '{printf("%s\n",$1)}' | wc -l
-  fi
+network_status(){
+  dumpsys deviceidle get network | sed -e 's/false/1/' -e 's/true/0/'
 }
 
 # 获取屏幕状态，“0”表示屏幕亮，“1”表示屏幕不亮
 # Get the screen status, "0" means the screen is bright, "1" means the screen is not bright
 screen_status() {
-  dumpsys deviceidle | awk -F'=' '/mScreenOn/{print $2}' | sed -e 's/false/1/' -e 's/true/0/'
+  dumpsys deviceidle get screen | sed -e 's/false/1/' -e 's/true/0/'
 }

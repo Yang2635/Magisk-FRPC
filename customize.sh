@@ -167,24 +167,6 @@ if [ "$(get_choose)" -eq 0 ]; then
   set_perm_recursive ${MODPATH}/files/bin/busybox 0 0 0755 0755
   customize_print "- 权限设置完成!"
   customize_print " "
-  customize_print "- 开始设置自定义Busybox指令环境!"
-  customize_print " "
-  if [ -x ${MODPATH}/files/bin/busybox/busybox_${F_ARCH} ]; then
-    ${MODPATH}/files/bin/busybox/busybox_${F_ARCH} --install -s ${MODPATH}/files/bin/busybox
-    customize_print "- 自定义Busybox指令环境设置成功!"
-  else
-    customize_print "- Busybox指令无可执行权限，将尝试查找其它可能的Busybox指令!"
-    if [ -x /data/adb/magisk/busybox ]; then
-      /data/adb/magisk/busybox --install -s ${MODPATH}/files/bin/busybox
-      customize_print "- 找到Magisk Busybox指令，成功设置指令环境!"
-    elif [ -n "$(command -v busybox)" ]; then
-      findbb=$(command -v busybox)
-      ${findbb} --install -s ${MODPATH}/files/bin/busybox
-      customize_print "- 在PATH中找到Busybox指令，成功设置指令环境!"
-    else
-      customize_print "- 注意！！！未设置BusyBox指令环境，可能部分命令执行结果存在偏差！"
-    fi
-  fi
   sed -i -e "/^F_ARCH=/c F_ARCH=${F_ARCH}" -e "/^DATADIR=/c DATADIR=\'${DATADIR}\'" "${MODPATH}/files/status.conf"
   FRP_VERSION=$(${MODPATH}/files/bin/frpc-${F_ARCH} -v)
   sed -i -e "/^version=/c version=${VERSION}-\(frpc\: v${FRP_VERSION}\)" -e "/^versionCode=/c versionCode=${VERSIONCODE}" "${MODPATH}/module.prop"

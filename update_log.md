@@ -2,6 +2,11 @@
 
 让你的手机等终端设备运行FRPC程序。程序依赖Magisk，请自行安装Magisk模块后使用。
 
+## v3.1.1
+
+- 优化：相关函数及运行逻辑
+- 逐步使用统一PATH环境，避免不同设备自带命令参数缺失造成执行逻辑严重判断错误
+
 ## v3.1.0
 
 - 更新：FRPC程序为**v0.46.1**，点击查看[FRPC更新日志](https://github.com/fatedier/frp/releases/tag/v0.46.1)

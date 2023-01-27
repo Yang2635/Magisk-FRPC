@@ -1,21 +1,22 @@
 # Magisk-FRPC
-Use Magisk mount module to run FRPC.
+
+A Magisk module for running FRPC on Android devices.
 
 If your terminal device uses WEB service or other services need remote access, then this module will be your good choice.
 
 ---
 
-使用 Magisk 挂载模块运行 FRPC。
+在 Android 设备上运行 FRPC 的一个 Magisk 模块。
 
-若您的终端设备使用了WEB服务或其他服务需要远程访问，那么该模块将是您的不错的选择。
+若您的终端设备使用了 WEB 服务或其他服务需要远程访问，那么该模块将是您的不错的选择。
 
 ## Usage
 
-After the module is installed, please browse the frpc.ini file under the Android/frpc directory to read the relevant instructions and configuration files, and then restart the device. After the device is running, the FRPC daemon will run on your device.
+After the module is installed, please browse and edit the frpc.ini configuration file in the Android/frpc directory. Then restart the device, after the device is running, it will run the FRPC daemon on your device.
 
 ---
 
-模块安装完成后，请到 Android/frpc 目录下浏览 frpc.ini 文件阅读相关说明并配置文件，然后重启设备。设备运行后，会在你的设备运行FRPC守护程序。
+模块安装完成后，请到 Android/frpc 目录下浏览并编辑 frpc.ini 配置文件文件。然后重启设备，设备运行后，会在你的设备上运行 FRPC 守护程序。
 
 ## About
 
@@ -28,18 +29,18 @@ After the module is installed, please browse the frpc.ini file under the Android
 - Check the integrity of the file to prevent the module from being damaged. (thanks to the inspiration provided by the Riru module).
 - It can be turned on or off in the Magisk module to control the start and end of the FRPC program.
 - The power of the device is less than 20% and the FRPC program is automatically terminated when it is not being charged. Please keep the device full of power!
-- Creating a screen file in the module directory means that the screen is detected, otherwise it will not be detected.
+- Creating a `screen` file in the module directory means that the screen is detected, otherwise it will not be detected.
 
 ---
 
 - 模块支持`arm`、`arm64`、`amd64`、`x86`架构。安装时自动判断设备指令架构并应用。
-- 使用模块携带的Busybox程序中crond命令建立定时任务检测状态。
-- FRPC配置文件修改后会自动检测并重载配置文件。
-- Magisk模块页面自动显示模块状态信息。
-- 检验文件完整性，防止模块被破坏。（感谢Riru模块提供的灵感）。
-- 可在Magisk模块中开启或关闭来控制FRPC程序启动与结束。
-- 设备电量低于20%且未在充电自动终止FRPC程序，请保持设备电量充足！
-- 在模块目录创建 screen 文件则表示息屏检测，反之不检测
+- 使用模块携带的 Busybox 程序中 crond 命令建立定时任务检测状态。
+- FRPC 配置文件修改后会自动检测并重载配置文件。
+- Magisk 模块页面自动显示模块状态信息。
+- 检验文件完整性，防止模块被破坏。（感谢 Riru 模块提供的灵感）。
+- 可在 Magisk 模块中开启或关闭来控制 FRPC 程序启动与结束。
+- 设备电量低于 20% 且未在充电自动终止 FRPC 程序，请保持设备电量充足！
+- 在模块目录创建 `screen` 文件则表示息屏检测，反之不检测。
 
 ## How to build？
 
@@ -47,17 +48,17 @@ The traditional direct zip package construction method is not feasible, so I wro
 
 ---
 
-传统的直接打zip包构建方式已不可行，为此写了一份构建脚本，可参考文章：https://www.isisy.com/1276.html
+传统的直接打 zip 包构建方式已不可行，为此写了一份构建脚本，可参考文章：https://www.isisy.com/1276.html
 
 ## Uninstall && Clear
 
-The module settings are only generated in the Magisk module directory (/data/adb/modules/Magisk-FRPC) and the Android/frpc directory (excluding frpc log custom other path settings). If the module uninstallation is not complete, please manually clear Android/ frpc directory and related files.
+The module only releases the files required for additional work in the Android/frpc directory of the device (excluding other path settings for customizing frpc logs). If the `uninstall.sh` script is not executed when the module is uninstalled, please manually clear the files in the Android/frpc directory.
 
 ---
 
-模块设置仅在 Magisk 模块目录（/data/adb/modules/Magisk-FRPC）和 Android/frpc 目录生成文件（不含 frpc 日志自定义其它路径设置），若模块卸载不完全，则请手动清除 Android/frpc 目录及相关文件。
+模块仅在设备 Android/frpc 目录释放额外工作需要的文件（不含 frpc 日志自定义其它路径设置），若模块卸载时未执行 `uninstall.sh` 脚本，请手动清除 Android/frpc 目录内文件。
 
-> FRPC程序的日志路径设置请勿设置到根目录中去，除非您有需要自定义日志路径，否则请保持默认日志设置或关闭日志生成。
+> FRPC 程序的日志路径设置请勿设置到根目录中去，除非您有需要自定义日志路径，否则请保持默认日志设置或关闭日志生成。
 
 ## Thanks
 
@@ -66,4 +67,3 @@ The module settings are only generated in the Magisk module directory (/data/adb
 - https://github.com/fatedier/frp
 - https://github.com/RikkaApps/Riru
 - 其它模块的参考
-

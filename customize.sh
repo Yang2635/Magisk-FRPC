@@ -161,7 +161,6 @@ if [ "$(get_choose)" -eq 0 ]; then
   extract "${ZIPFILE}" "files/status.conf" "${MODPATH}/files" true
   extract "${ZIPFILE}" "files/frpc.ini" "${MODPATH}/files" true
   extract "${ZIPFILE}" "files/frpc_full.ini" "${MODPATH}/files" true
-  cp ${MODPATH}/module.prop ${MODPATH}/files/module.prop.bak
   customize_print "- 文件释放完成，正在设置权限!"
   set_perm_recursive ${MODPATH} 0 0 0755 0644
   set_perm_recursive ${MODPATH}/files/bin 0 0 0755 0755
@@ -171,6 +170,7 @@ if [ "$(get_choose)" -eq 0 ]; then
   sed -i -e "/^F_ARCH=/c F_ARCH=${F_ARCH}" -e "/^DATADIR=/c DATADIR=\'${DATADIR}\'" "${MODPATH}/files/status.conf"
   FRP_VERSION=$(${MODPATH}/files/bin/frpc-${F_ARCH} -v)
   sed -i -e "/^version=/c version=${VERSION}-\(frpc\: v${FRP_VERSION}\)" -e "/^versionCode=/c versionCode=${VERSIONCODE}" "${MODPATH}/module.prop"
+  cp ${MODPATH}/module.prop ${MODPATH}/files/module.prop.bak
   customize_print " "
   customize_print "(?) 是否息屏检测配置文件状态？(请选择)"
   customize_print "- 按音量键＋: 检  测 √"

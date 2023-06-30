@@ -17,10 +17,9 @@ fi
 running_start() {
   local _frpc_admin_port _running_num _check_file_status
   battery_electricity_check
-  if [ "$?" -ne 0 ]; then
-    return
-  fi
+  [ "$?" -ne 0 ] && return
 
+  # 检查配置文件
   if [ ! -f "${DATADIR}/frpc/frpc.ini" ]; then
     sed -i -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=Android\/frpc目录下未找到frpc\.ini文件！" \
       -e "/^RUNNING_STATUS=/c RUNNING_STATUS=FRPC未运行！" "${MODDIR}/files/status.conf"
@@ -29,6 +28,7 @@ running_start() {
   _check_file_status="$(stat -c %Y ${DATADIR}/frpc/frpc.ini)"
   sed -i "/^FILE_STATUS=/c FILE_STATUS=${_check_file_status}" "${MODDIR}/files/status.conf"
 
+  # 检索配置文件是否正确
   sh ${MODDIR}/run_frpc.sh verify
   if [ "$?" -eq 0 ]; then
     sed -i "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=配置文件检测正确！" "${MODDIR}/files/status.conf"
@@ -38,16 +38,18 @@ running_start() {
       return 9
   fi
 
+  # 启动FRPC程序
   sh ${MODDIR}/run_frpc.sh start
   sleep 3
   if [ -n "$(get_frpc_running_pid ${frpc_bin})" ]; then
     sed -i -e "/^RUNNING_STATUS=/c RUNNING_STATUS=FRPC正在运行中！" \
       -e "/^RELOAD_NUM=/c RELOAD_NUM=0" "${MODDIR}/files/status.conf"
   else
-    sed -i "/^RUNNING_STATUS=/c RUNNING_STATUS=FRPC启动失败！" "${MODDIR}/files/status.conf"
+    sed -i "/^RUNNING_STATUS=/c RUNNING_STATUS=FRPC启动失败！若您配置了FRPC日志，请根据日志排查错误！" "${MODDIR}/files/status.conf"
     return 10
   fi
 
+  # 检查FRPC穿透了多少服务（不完全正确，例如xtcp方式无记录）
   _frpc_admin_port=$(get_parameters admin_port "${DATADIR}/frpc/frpc.ini")
   if [ "${_frpc_admin_port}" -ge 1 ] && [ "${_frpc_admin_port}" -le 65535 ]; then
     _running_num=$(sh ${MODDIR}/run_frpc.sh status)
@@ -65,15 +67,14 @@ running_start() {
 check_reload() {
   local _running_num _check_new_file_status _reload_num
   battery_electricity_check
-  if [ "$?" -ne 0 ]; then
-    return
-  fi
+  [ $? -ne 0 ] && return
 
   if [ ! -f ${DATADIR}/frpc/frpc.ini ]; then
     sed -i "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=Android\/frpc目录下未找到frpc\.ini文件！（已保持当前运行状态）" "${MODDIR}/files/status.conf"
     return 13
   fi
 
+  # 时间戳若不等，文件被修改，执行重载操作
   _check_new_file_status="$(stat -c %Y ${DATADIR}/frpc/frpc.ini)"
   if [ "${FILE_STATUS}" != "${_check_new_file_status}" ]; then
     sh ${MODDIR}/run_frpc.sh verify
@@ -97,13 +98,11 @@ check_reload() {
   fi
 }
 
+# 电池电量检测
 battery_electricity_check() {
   if [ "$(battery_electricity)" -lt 20 ] && [ "$(battery_charge)" -eq 1 ]; then
     if [ -n "${_frpc_pid_num}" ]; then
-      {
-        kill -9 ${_frpc_pid_num}
-        rm -f "${MODDIR}/files/frpc_run.pid"
-      }
+      kill_frpc ${frpc_bin}
       sed -i -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=已自动停止检测！" \
         -e "/^RUNNING_STATUS=/c RUNNING_STATUS=当前电量低于20%且未在充电，自动停止运行！" \
         -e "/^RUNNING_NUM=/c RUNNING_NUM=已自动停止检测！" "${MODDIR}/files/status.conf"
@@ -123,21 +122,12 @@ main() {
   local _frpc_pid_num="$(get_frpc_running_pid ${frpc_bin})"
 
   if [ ! -f "${MODDIR}/disable" ]; then
-    if [ -z "${_frpc_pid_num}" ]; then
-      running_start
-    elif [ -n "${_frpc_pid_num}" ]; then
-      check_reload
-    fi
+    [ -z "${_frpc_pid_num}" ] && running_start || check_reload
   else
-    if [ -n "${_frpc_pid_num}" ]; then
-      {
-        kill -9 ${_frpc_pid_num}
-        rm -f "${MODDIR}/files/frpc_run.pid"
-      }
-      sed -i -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=已手动停止检测！" \
-        -e "/^RUNNING_STATUS=/c RUNNING_STATUS=已手动停止运行（重新打开则自动重启FRPC，无需设备重启）" \
-        -e "/^RUNNING_NUM=/c RUNNING_NUM=已手动停止检测！" "${MODDIR}/files/status.conf"
-    fi
+    kill_frpc ${frpc_bin}
+    sed -i -e "/^CHECK_FILE_STATUS=/c CHECK_FILE_STATUS=已手动停止检测！" \
+      -e "/^RUNNING_STATUS=/c RUNNING_STATUS=已手动停止运行（重新打开则自动重启FRPC，无需设备重启）" \
+      -e "/^RUNNING_NUM=/c RUNNING_NUM=已手动停止检测！" "${MODDIR}/files/status.conf"
   fi
 
   _frpc_vmrss="$(frpc_vmrss_check ${frpc_bin})"

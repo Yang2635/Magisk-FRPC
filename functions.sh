@@ -41,25 +41,21 @@ get_frpc_running_pid() {
   local _get_frpc_pid="$(pidof "${_frpc_bin}")"
   if [ -n "${_get_frpc_pid}" ]; then
     local _get_frpc_pid_number="$(echo "${_get_frpc_pid}" | wc -w)"
-  fi
-
-  if [ -f "${MODDIR}/files/frpc_run.pid" ]; then
-    _frpc_pid=$(cat ${MODDIR}/files/frpc_run.pid)
-    if [ -n "${_frpc_pid}" ] && [ -d "/proc/${_frpc_pid}" ]; then
-      _get_exec_comm="$(cat /proc/${_frpc_pid}/comm)"
-      if [ "${_get_exec_comm}" == "${_frpc_bin}" ] && [ "${_get_frpc_pid_number}" -eq 1 ]; then
-        echo "${_frpc_pid}"
-        return
+    if [ -f "${MODDIR}/files/frpc_run.pid" ]; then
+      _frpc_pid=$(cat ${MODDIR}/files/frpc_run.pid)
+      if [ -n "${_frpc_pid}" ] && [ -d "/proc/${_frpc_pid}" ]; then
+        _get_exec_comm="$(cat /proc/${_frpc_pid}/comm)"
+        if [ "${_get_exec_comm}" == "${_frpc_bin}" ] && [ "${_get_frpc_pid_number}" -eq 1 ]; then
+          echo "${_frpc_pid}"
+          return
+        fi
       fi
     fi
-  fi
-
-  if [ -n "${_get_frpc_pid}" ]; then
     echo "${_get_frpc_pid}"
     return
   fi
 
-  local _process_get_frpc_pid=$(process ${_frpc_bin})
+  local _process_get_frpc_pid="$(process ${_frpc_bin})"
   if [ -n "${_process_get_frpc_pid}" ]; then
     echo "${_process_get_frpc_pid}"
     return
@@ -81,6 +77,17 @@ frpc_vmrss_check() {
   else
     echo "FRPC未运行！"
     return 5
+  fi
+}
+
+kill_frpc(){
+  local _frpc_bin="$1"
+  local _frpc_pid_num="$(get_frpc_running_pid ${_frpc_bin})"
+  if [ -n "${_frpc_pid_num}" ]; then
+    {
+      kill -9 ${_frpc_pid_num}
+      rm -f "${MODDIR}/files/frpc_run.pid"
+    }
   fi
 }
 

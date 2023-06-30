@@ -9,7 +9,7 @@ start_frpc() {
 }
 
 verify_frpc() {
-  ${MODDIR}/files/bin/frpc-${F_ARCH} verify -c ${DATADIR}/frpc/frpc.ini
+  ${MODDIR}/files/bin/frpc-${F_ARCH} verify -c ${DATADIR}/frpc/frpc.ini >/dev/null 2>&1
 }
 
 reload_frpc() {
